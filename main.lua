@@ -10,7 +10,7 @@ local ScrollSmoothness = 0.2
 		Content = Color3.fromRGB(50, 50, 50);
 		ScrollbarTrack = Color3.fromRGB(40, 40, 40);
 		TextColor = Color3.fromRGB(255, 255, 255);
-		ElementColor = Color3.fromRGB(50, 50, 50);
+		ItemColor = Color3.fromRGB(50, 50, 50);
 	}]]
 local DefaultTheme = {
 	SchemeColor = Color3.fromRGB(38, 175, 136);
@@ -19,7 +19,7 @@ local DefaultTheme = {
 	Content = Color3.fromRGB(41, 41, 50);
 	ScrollbarTrack = Color3.fromRGB(33, 34, 40);
 	TextColor = Color3.fromRGB(255, 255, 255);
-	ElementColor = Color3.fromRGB(51, 51, 60);
+	ItemColor = Color3.fromRGB(51, 51, 60);
 }
 
 local Workspace = game:GetService("Workspace")
@@ -52,17 +52,27 @@ function Utility:ApplyTheme(obj,Property,Theme,Style)
 	assert(obj ~= nil,"No object given.")
 	assert(Property ~= nil,"No property given.")
 	assert(Style ~= nil,"No style given.")
-	assert(Theme[Style] ~= nil,"Style "..tostring(Style).." does not exist.")
+	if typeof(Style) == "string" then
+		assert(Theme[Style] ~= nil,"Style "..tostring(Style).." does not exist.")
+	end
+	
+	if typeof(Style) == "string" then
+		obj[Property] = Theme[Style]
+	else
+		obj[Property] = Style()
+	end
 
-	obj[Property] = Theme[Style]
-
-	if not Styles[Style] then Styles[Style] = {} end
-	Styles[Style][obj] = Property
+	if not Styles[obj] then Styles[obj] = {} end
+	Styles[obj][Property] = Style
 end
 function Utility:UpdateTheme(NewTheme)
-	for Style,Data in pairs(Styles) do
-		for obj,Property in pairs(Data) do
-			obj[Property] = NewTheme[Style]
+	for obj,Data in pairs(Styles) do
+		for Property,Style in pairs(Data) do
+			if typeof(Style) == "string" then
+				obj[Property] = NewTheme[Style]
+			else
+				obj[Property] = Style()
+			end
 		end
 	end
 end
@@ -349,8 +359,8 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 	NameText.AnchorPoint = Vector2.new(0,0.5)
 	NameText.BackgroundTransparency = 1
 	NameText.BorderSizePixel = 0
-	NameText.Position = UDim2.new(0,IconImage ~= nil and 36 or 7.5,0.5,0)
-	NameText.Size = UDim2.new(1,-15,1,-15)
+	NameText.Position = UDim2.new(0,IconImage ~= nil and 36 or 7.5,0,Item.AbsoluteSize.Y/2)
+	NameText.Size = UDim2.new(1,-15,0,Item.AbsoluteSize.Y - 15)
 	NameText.ZIndex = 0
 	NameText.Font = Enum.Font.SourceSans
 	NameText.Text = Name
@@ -365,8 +375,8 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 		IconImage.AnchorPoint = Vector2.new(0,0.5)
 		IconImage.BackgroundTransparency = 1
 		IconImage.BorderSizePixel = 0
-		IconImage.Position = UDim2.new(0,7.5,0.5,0)
-		IconImage.Size = UDim2.new(1,-15,1,-15)
+		IconImage.Position = UDim2.new(0,7.5,0,Item.AbsoluteSize.Y/2)
+		IconImage.Size = UDim2.new(1,-15,0,Item.AbsoluteSize.Y - 15)
 		IconImage.ZIndex = 0
 		IconImage.Image = Icon
 		Utility:ApplyTheme(IconImage,"ImageColor3",Theme,(BackgroundStyle == "SchemeColor" and "TextColor" or "SchemeColor"))
@@ -381,8 +391,8 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 		DescriptionButton.AnchorPoint = Vector2.new(1,0.5)
 		DescriptionButton.BackgroundTransparency = 1
 		DescriptionButton.BorderSizePixel = 0
-		DescriptionButton.Position = UDim2.new(1,-7.5,0.5,0)
-		DescriptionButton.Size = UDim2.new(1,-15,1,-15)
+		DescriptionButton.Position = UDim2.new(1,-7.5,0,Item.AbsoluteSize.Y/2)
+		DescriptionButton.Size = UDim2.new(1,-15,0,Item.AbsoluteSize.Y - 15)
 		DescriptionButton.ZIndex = 2
 		DescriptionButton.Image = "rbxassetid://8318429389"
 		Utility:ApplyTheme(DescriptionButton,"ImageColor3",Theme,(BackgroundStyle == "SchemeColor" and "TextColor" or "SchemeColor"))
@@ -512,7 +522,7 @@ function UI:CreateLib(Title,Theme,Position)
 	CloseButton.BorderSizePixel = 0
 	CloseButton.Position = UDim2.new(1,-5,0.5,0)
 	CloseButton.Size = UDim2.new(1,-10,1,-10)
-	CloseButton.Image = "rbxassetid://3944676352"
+	CloseButton.Image = "rbxassetid://8324551908"
 	ApplyTheme(CloseButton,"ImageColor3","TextColor")
 	Instance.new("UIAspectRatioConstraint",CloseButton)
 	CloseButton.Parent = Topbar
@@ -664,24 +674,33 @@ function UI:CreateLib(Title,Theme,Position)
 			SectionUIList.FillDirection = Enum.FillDirection.Vertical
 			SectionUIList.SortOrder = Enum.SortOrder.LayoutOrder
 			SectionUIList.Parent = SectionHolder
-
+			
+			SectionHeader.Visible = Data.Hidden == true and false or true
 			SectionHeader.Parent = SectionHolder
 
 			local Section = {}
-
-			function Section:NewLabel(Text,Description,Data)
-				Text = Text or "Label"
+			
+			function Section:UpdateName(NewName)
+				SectionHeader:FindFirstChildOfClass("TextLabel").Text = NewName
+			end
+			
+			function Section:SetHidden(Hidden)
+				SectionHeader.Visible = not Hidden
+			end
+			
+			function Section:NewLabel(Name,Description,Data)
+				Name = Name or "Label"
 				Data = Data or {}
 				
-				local LabelItem,OnDisplayDescription = CreateItem(Text,Data.Icon or nil,Description,"ElementColor")
+				local LabelItem,OnDisplayDescription = CreateItem(Name,Data.Icon or nil,Description,"ItemColor")
 
 				LabelItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				LabelItem.Parent = SectionHolder
 
 				local Label = {}
 
-				function Label:UpdateText(NewText)
-					LabelItem:FindFirstChildOfClass("TextLabel").Text = NewText
+				function Label:UpdateName(NewName)
+					LabelItem:FindFirstChildOfClass("TextLabel").Text = NewName
 				end
 				function Label:UpdateIcon(NewIcon)
 					LabelItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
@@ -695,12 +714,12 @@ function UI:CreateLib(Title,Theme,Position)
 
 				return Label
 			end
-			function Section:NewButton(Text,Description,Callback,Data)
-				Text = Text or "Button"
+			function Section:NewButton(Name,Description,Callback,Data)
+				Name = Name or "Button"
 				Callback = Callback or function() end
 				Data = Data or {}
 				
-				local ButtonItem,OnDisplayDescription = CreateItem(Text,Data.Icon or "rbxassetid://8318711356",Description,"ElementColor")
+				local ButtonItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8318711356",Description,"ItemColor")
 				local Input = Utility:AddItemButton(ButtonItem)
 
 				ButtonItem.LayoutOrder = #SectionHolder:GetChildren() - 1
@@ -708,8 +727,8 @@ function UI:CreateLib(Title,Theme,Position)
 
 				local Button = {}
 
-				function Button:UpdateText(NewText)
-					ButtonItem:FindFirstChildOfClass("TextLabel").Text = NewText
+				function Button:UpdateName(NewName)
+					ButtonItem:FindFirstChildOfClass("TextLabel").Text = NewName
 				end
 
 				Input.MouseButton1Click:Connect(function()
@@ -728,17 +747,17 @@ function UI:CreateLib(Title,Theme,Position)
 
 				return Button
 			end
-			function Section:NewToggle(Text,Description,Callback,Data)
-				Text = Text or "Toggle"
+			function Section:NewToggle(Name,Description,Callback,Data)
+				Name = Name or "Toggle"
 				Callback = Callback or function() end
 				Data = Data or {}
 				
-				local ToggleItem,OnDisplayDescription = CreateItem(Text,"rbxassetid://8318488758",Description,"ElementColor")
+				local State = Data.State or false
+				
+				local ToggleItem,OnDisplayDescription = CreateItem(Name,"rbxassetid://8318488758",Description,"ItemColor")
 				local Input = Utility:AddItemButton(ToggleItem)
 				local Circle = ToggleItem:FindFirstChildOfClass("ImageLabel")
 				local Checked = Instance.new("Frame")
-
-				local State = Data.State or false
 
 				ToggleItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				ToggleItem.Parent = SectionHolder
@@ -753,8 +772,8 @@ function UI:CreateLib(Title,Theme,Position)
 
 				local Toggle = {}
 
-				function Toggle:UpdateText(NewText)
-					ToggleItem:FindFirstChildOfClass("TextLabel").Text = NewText
+				function Toggle:UpdateName(NewName)
+					ToggleItem:FindFirstChildOfClass("TextLabel").Text = NewName
 				end
 
 				function Toggle:SetState(NewState)
@@ -765,6 +784,10 @@ function UI:CreateLib(Title,Theme,Position)
 					})
 
 					return Utility:CallCallback(Callback,State)
+				end
+				
+				function Toggle:GetState()
+					return State
 				end
 
 				Input.MouseButton1Click:Connect(function()
@@ -784,6 +807,85 @@ function UI:CreateLib(Title,Theme,Position)
 				Toggle:SetState(State)
 				
 				return Toggle
+			end
+			function Section:NewSlider(Name,Description,Min,Max,Callback,Data)
+				Name = Name or "Slider"
+				Min = Min or 0
+				Max = Max or 100
+				Callback = Callback or function() end
+				Data = Data or {}
+				
+				local Value = Data.Value or Min
+				
+				local SliderItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8324589323",Description,"ItemColor")
+				local Input = Utility:AddItemButton(SliderItem)
+				local SliderHolder = Instance.new("Frame")
+				local SliderValue = Instance.new("Frame")
+				
+				local ItemSize = SliderItem.AbsoluteSize
+				
+				SliderItem.LayoutOrder = #SectionHolder:GetChildren() - 1
+				SliderItem.Size = UDim2.new(1,0,0,ItemSize.Y + 12)
+				SliderItem.Parent = SectionHolder
+				
+				SliderHolder.AnchorPoint = Vector2.new(0.5,1)
+				SliderHolder.Position = UDim2.new(0.5,0,1,-6)
+				SliderHolder.Size = UDim2.new(1,-12,0,6)
+				SliderHolder.ClipsDescendants = true
+				Utility:Corner(SliderHolder,UDim.new(1,0))
+				ApplyTheme(SliderHolder,"BackgroundColor3",function()
+					return Color3.new(math.clamp(CurrentTheme.ItemColor.R - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.G - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.B - 10/255,0,1))
+				end)
+				SliderHolder.Parent = SliderItem
+				
+				SliderValue.Size = UDim2.new(0,0,1,0)
+				Utility:Corner(SliderValue,UDim.new(1,0))
+				ApplyTheme(SliderValue,"BackgroundColor3","SchemeColor")
+				SliderValue.Parent = SliderHolder
+				
+				local Slider = {}
+				
+				function Slider:SetValue(NewValue)
+					Value = math.clamp(NewValue,Min,Max)
+					SliderValue.Size = UDim2.new(math.clamp((Value - Min)/(Max - Min),0,1),0,1,0)
+					
+					Utility:CallCallback(Callback,Value)
+				end
+				
+				function Slider:GetValue()
+					return Value
+				end
+				
+				Input.MouseButton1Down:Connect(function()
+					local MouseMove
+					local MouseUp
+					
+					local function Update()
+						Slider:SetValue((((Max - Min)/SliderHolder.AbsoluteSize.X) * (Mouse.X - SliderHolder.AbsolutePosition.X)) + Min)
+					end
+					
+					MouseMove = Mouse.Move:Connect(Update)
+					MouseUp = UIS.InputEnded:Connect(function(Input)
+						if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+							MouseMove:Disconnect()
+							MouseUp:Disconnect()
+
+							Update()
+						end
+					end)
+					
+					Update()
+				end)
+				
+				if OnDisplayDescription then
+					OnDisplayDescription:Connect(function()
+						DisplayDescription(Description)
+					end)
+				end
+				
+				Slider:SetValue(Value)
+				
+				return Slider
 			end
 			
 			if OnDisplayDescription then
