@@ -76,6 +76,19 @@ function Utility:UpdateTheme(NewTheme)
 		end
 	end
 end
+function Utility:UpdateThemeColor(NewTheme,_Style)
+	for obj,Data in pairs(Styles) do
+		for Property,Style in pairs(Data) do
+			if Style == _Style then
+				if typeof(Style) == "string" then
+					obj[Property] = NewTheme[Style]
+				else
+					obj[Property] = Style()
+				end
+			end
+		end
+	end
+end
 
 function Utility:Drag(Dragger,Move)
 	local Dragging = false
@@ -428,7 +441,8 @@ function UI:CreateLib(Title,Theme,Position)
 
 	local LibName = HttpService:GenerateGUID(false)
 	local DisplayingDescription = false
-
+	local OnClose = Instance.new("BindableEvent")
+	
 	local Gui = Instance.new("ScreenGui")
 	local Main = Instance.new("Frame")
 	local Topbar = Instance.new("Frame")
@@ -589,23 +603,37 @@ function UI:CreateLib(Title,Theme,Position)
 	Main.Position = Position or UDim2.new(0,Workspace.CurrentCamera.ViewportSize.X/2 - Main.AbsoluteSize.X/2,0,Workspace.CurrentCamera.ViewportSize.Y/2 - Main.AbsoluteSize.Y/2)
 	Utility:Drag(Topbar,Main)
 
-	if syn then
+	if syn ~= nil then
 		syn.protect_gui(Gui)
 	end
-
-	if get_hidden_gui then
-		Gui.Parent = get_hidden_gui()
-	else
-		xpcall(function()
-			Gui.Parent = game:GetService("CoreGui")
-		end,function()
-			Gui.Parent = Player:FindFirstChildWhichIsA("PlayerGui",true)
-		end)
-	end
-
-	local Lib = {}
-
+	
 	local SelectedTab = nil
+	
+	local Lib = {}
+	Lib.Enabled = false
+	Lib.OnClose = OnClose.Event
+	
+	function Lib:EnableUI(Enabled)
+		if Enabled then
+			Lib.Enabled = true
+			
+			if get_hidden_gui ~= nil then
+				Gui.Parent = get_hidden_gui()
+			else
+				xpcall(function()
+					Gui.Parent = game:GetService("CoreGui")
+				end,function()
+					Gui.Parent = Player:FindFirstChildWhichIsA("PlayerGui",true)
+				end)
+			end
+		else
+			Lib.Enabled = false
+			Gui.Parent = nil
+		end
+	end
+	function Lib:ToggleUI()
+		return Lib:EnableUI(not Lib.Enabled)
+	end
 	function Lib:NewTab(Name)
 		Name = Name or "Tab "..tostring(#Tabs:GetChildren())
 		if Content:FindFirstChild(Name) then error("Tab "..tostring(Name).." already exists.") end
@@ -683,11 +711,9 @@ function UI:CreateLib(Title,Theme,Position)
 			function Section:UpdateName(NewName)
 				SectionHeader:FindFirstChildOfClass("TextLabel").Text = NewName
 			end
-			
 			function Section:SetHidden(Hidden)
 				SectionHeader.Visible = not Hidden
 			end
-			
 			function Section:NewLabel(Name,Description,Data)
 				Name = Name or "Label"
 				Data = Data or {}
@@ -726,7 +752,6 @@ function UI:CreateLib(Title,Theme,Position)
 				ButtonItem.Parent = SectionHolder
 
 				local Button = {}
-
 				function Button:UpdateName(NewName)
 					ButtonItem:FindFirstChildOfClass("TextLabel").Text = NewName
 				end
@@ -771,11 +796,9 @@ function UI:CreateLib(Title,Theme,Position)
 				Checked.Parent = Circle
 
 				local Toggle = {}
-
 				function Toggle:UpdateName(NewName)
 					ToggleItem:FindFirstChildOfClass("TextLabel").Text = NewName
 				end
-
 				function Toggle:SetState(NewState)
 					State = NewState
 
@@ -785,7 +808,6 @@ function UI:CreateLib(Title,Theme,Position)
 
 					return Utility:CallCallback(Callback,State)
 				end
-				
 				function Toggle:GetState()
 					return State
 				end
@@ -805,7 +827,6 @@ function UI:CreateLib(Title,Theme,Position)
 				end
 				
 				Toggle:SetState(State)
-				
 				return Toggle
 			end
 			function Section:NewSlider(Name,Description,Min,Max,Callback,Data)
@@ -844,14 +865,15 @@ function UI:CreateLib(Title,Theme,Position)
 				SliderValue.Parent = SliderHolder
 				
 				local Slider = {}
-				
+				function Slider:UpdateName(NewName)
+					SliderItem:FindFirstChildOfClass("TextLabel").Text = NewName
+				end
 				function Slider:SetValue(NewValue)
 					Value = math.clamp(NewValue,Min,Max)
 					SliderValue.Size = UDim2.new(math.clamp((Value - Min)/(Max - Min),0,1),0,1,0)
 					
 					Utility:CallCallback(Callback,Value)
 				end
-				
 				function Slider:GetValue()
 					return Value
 				end
@@ -884,8 +906,93 @@ function UI:CreateLib(Title,Theme,Position)
 				end
 				
 				Slider:SetValue(Value)
-				
 				return Slider
+			end
+			function Section:NewTextBox(Name,Description,Callback,Data)
+				Name = Name or "TextBox"
+				Callback = Callback or function() end
+				Data = Data or {}
+
+				local TextBoxItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8324589323",Description,"ItemColor")
+				local Input = Utility:AddItemButton(TextBoxItem)
+				local TextBoxHolder = Instance.new("Frame")
+				local TextBoxInstance = Instance.new("TextBox")
+
+				local ItemSize = TextBoxItem.AbsoluteSize
+
+				TextBoxItem.LayoutOrder = #SectionHolder:GetChildren() - 1
+				TextBoxItem.Size = UDim2.new(1,0,0,ItemSize.Y + 30)
+				TextBoxItem.Parent = SectionHolder
+
+				TextBoxHolder.AnchorPoint = Vector2.new(0.5,1)
+				TextBoxHolder.Position = UDim2.new(0.5,0,1,-6)
+				TextBoxHolder.Size = UDim2.new(1,-12,0,24)
+				TextBoxHolder.ClipsDescendants = true
+				Utility:Corner(TextBoxHolder,CornerSize)
+				ApplyTheme(TextBoxHolder,"BackgroundColor3",function()
+					return Color3.new(math.clamp(CurrentTheme.ItemColor.R - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.G - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.B - 10/255,0,1))
+				end)
+				TextBoxHolder.Parent = TextBoxItem
+				
+				TextBoxInstance.AnchorPoint = Vector2.new(0.5,0.5)
+				TextBoxInstance.BackgroundTransparency = 1
+				TextBoxInstance.BorderSizePixel = 0
+				TextBoxInstance.Position = UDim2.new(0.5,0,0.5,0)
+				TextBoxInstance.Size = UDim2.new(1,-12,1,-12)
+				TextBoxInstance.ClearTextOnFocus = Data.ClearTextOnFocus or false
+				TextBoxInstance.MultiLine = false
+				TextBoxInstance.PlaceholderText = Data.PlaceholderText or "..."
+				TextBoxInstance.TextXAlignment = Enum.TextXAlignment.Left
+				TextBoxInstance.TextScaled = true
+				ApplyTheme(TextBoxInstance,"TextColor3","TextColor")
+				TextBoxInstance.Parent = TextBoxHolder
+
+				local TextBox = {}
+				function TextBox:UpdateName(NewName)
+					TextBoxItem:FindFirstChildOfClass("TextLabel").Text = NewName
+				end
+				function TextBox:UpdatePlaceholderText(NewPlaceholderText)
+					TextBoxInstance.PlaceholderText = NewPlaceholderText
+				end
+				function TextBox:SetValue(NewValue)
+					TextBoxInstance.Text = NewValue
+					
+					Utility:CallCallback(Callback,NewValue)
+				end
+				function TextBox:GetValue()
+					return TextBoxInstance.Text
+				end
+				
+				local CallbackMode = Data.CallbackMode
+				if CallbackMode == "OnEnterPressed" then
+					TextBoxInstance.FocusLost:Connect(function(EnterPressed)
+						if not EnterPressed then
+							return
+						end
+						
+						Utility:CallCallback(Callback,TextBoxInstance.Text)
+					end)
+					TextBoxInstance.ReturnPressedFromOnScreenKeyboard:Connect(function()
+						Utility:CallCallback(Callback,TextBoxInstance.Text)
+					end)
+				elseif CallbackMode == "OnFocusLost" then
+					TextBoxInstance.FocusLost:Connect(function()
+						Utility:CallCallback(Callback,TextBoxInstance.Text)
+					end)
+				else
+					TextBoxInstance:GetPropertyChangedSignal("Text"):Connect(function()
+						Utility:CallCallback(Callback,TextBoxInstance.Text)
+					end)
+				end
+
+				if OnDisplayDescription then
+					OnDisplayDescription:Connect(function()
+						DisplayDescription(Description)
+					end)
+				end
+
+				TextBox:SetValue(Data.Value or "")
+				return TextBox
 			end
 			
 			if OnDisplayDescription then
@@ -924,18 +1031,19 @@ function UI:CreateLib(Title,Theme,Position)
 		assert(CurrentTheme[Style] ~= nil,"Style "..tostring(Style).." does not exist.")
 
 		CurrentTheme[Style] = Color
-		Utility:UpdateTheme(CurrentTheme)
+		Utility:UpdateThemeColor(CurrentTheme,Style)
 	end
 	function Lib:Hint(...)
 		return DisplayDescription(...)
 	end
 
 	CloseButton.MouseButton1Click:Connect(function()
+		OnClose:Fire()
 		Gui:Destroy()
 	end)
 
 	Utility:SyncCanvasSize(Tabs,TabsUIList)
-
+	Lib:EnableUI(true)
 	return Lib
 end
 
