@@ -1227,33 +1227,4 @@ function UI:CreateLib(Title,Theme,Position)
 	return Lib
 end
 
-local Rainbow = false
-
-local Lib = UI:CreateLib("Ew Hub - Test")
-local Tab1 = Lib:NewTab("Tab1")
-local Tab2 = Lib:NewTab("Tab2")
-
-local Tab1_Section1 = Tab1:NewSection("Section1","Section description",{
-	Icon = "rbxassetid://7052906634";
-})
-Tab1_Section1:NewLabel("Test label")
-Tab1_Section1:NewButton("Test button","Test button description",function() print("Pressed!") end)
-Tab1_Section1:NewButton("Test fail button","Test fail button description",function() return false end)
-Tab1_Section1:NewButton("Test error button","Test error button description",function() error() end)
-Tab1_Section1:NewToggle("Toggle","Toggle",function(Value) print("Pressed!",Value) end)
-Tab1_Section1:NewSlider("Walkspeed","Sets your walkspeed",16,500,function(Value)
-	game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
-end)
-Tab1_Section1:NewSlider("Jumppower","Sets your jumppower",50,500,function(Value)
-	game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
-end)
-Tab1_Section1:NewTextBox("TextBox","Default",function(Value) print(Value) end,{CallbackMode = "Default",Value = "Default value"})
-Tab1_Section1:NewTextBox("TextBox","OnEnterPressed",function(Value) print(Value) end,{CallbackMode = "OnEnterPressed",PlaceholderText = "Placeholder"})
-Tab1_Section1:NewTextBox("TextBox","OnFocusLost",function(Value) print(Value) end,{CallbackMode = "OnFocusLost"})
-
-local Tab2_Section1 = Tab2:NewSection("Section1")
-Tab2_Section1:NewColorPicker("SchemeColor","Set the scheme color",function(Value)
-	Lib:UpdateThemeColor("SchemeColor",Value)
-end)
-
 return UI
