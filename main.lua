@@ -1011,6 +1011,7 @@ function UI:CreateLib(Title,Theme,Position)
 
 				local ColorPickerItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177457893",Description,"Item")
 				local Input = Utility:AddItemButton(ColorPickerItem)
+				local Preview = Instance.new("Frame")
 				local ColorWheel = Instance.new("ImageButton")
 				local ColorPickerImage = Instance.new("ImageLabel")
 				local Value = Instance.new("TextButton")
@@ -1022,6 +1023,12 @@ function UI:CreateLib(Title,Theme,Position)
 				
 				ColorPickerItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				ColorPickerItem.Parent = SectionHolder
+				
+				Preview.AnchorPoint = Vector2.new(1,0.5)
+				Preview.Position = UDim2.new(1,-35,0,ItemSize.Y/2)
+				Preview.Size = UDim2.new(0,30,0,ItemSize.Y - 15)
+				Utility:Corner(Preview,UDim.new(1,0))
+				Preview.Parent = ColorPickerItem
 				
 				ColorWheel.AutoButtonColor = false
 				ColorWheel.BackgroundTransparency = 1
@@ -1066,7 +1073,7 @@ function UI:CreateLib(Title,Theme,Position)
 						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
 						ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
 					})
-					Utility:CallCallback(Callback,ColorPicker:GetColor())
+					Preview.BackgroundColor3 = ColorPicker:GetColor()
 				end
 				local function UpdatePickers()
 					local x = -math.cos(h * math.pi * 2) * s * 64
@@ -1078,6 +1085,7 @@ function UI:CreateLib(Title,Theme,Position)
 						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
 						ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
 					})
+					Preview.BackgroundColor3 = ColorPicker:GetColor()
 				end
 				function ColorPicker:UpdateName(NewName)
 					ColorPickerItem:FindFirstChildOfClass("TextLabel").Text = NewName
@@ -1125,6 +1133,7 @@ function UI:CreateLib(Title,Theme,Position)
 						
 						ColorPickerImage.Position = UDim2.new(0,ValueX,0,ValueY)
 						UpdateColors()
+						Utility:CallCallback(Callback,ColorPicker:GetColor())
 					end
 					
 					MouseMove = Mouse.Move:Connect(Update)
@@ -1151,6 +1160,7 @@ function UI:CreateLib(Title,Theme,Position)
 						
 						ValueSlider.Position = UDim2.new(0.5,0,0,Value)
 						UpdateColors()
+						Utility:CallCallback(Callback,ColorPicker:GetColor())
 					end
 					
 					MouseMove = Mouse.Move:Connect(Update)
