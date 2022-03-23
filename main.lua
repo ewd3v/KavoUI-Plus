@@ -4,22 +4,22 @@ local Utility = {}
 local CornerSize = UDim.new(0,8)--UDim.new(0,6)
 local ScrollSmoothness = 0.2
 	--[[local DefaultTheme = {
-		SchemeColor = Color3.fromRGB(35, 175, 100);
+		Scheme = Color3.fromRGB(35, 175, 100);
 		Background = Color3.fromRGB(40, 40, 40);
 		Topbar = Color3.fromRGB(30, 30, 30);
 		Content = Color3.fromRGB(50, 50, 50);
 		ScrollbarTrack = Color3.fromRGB(40, 40, 40);
-		TextColor = Color3.fromRGB(255, 255, 255);
-		ItemColor = Color3.fromRGB(50, 50, 50);
+		Text = Color3.fromRGB(255, 255, 255);
+		Item = Color3.fromRGB(50, 50, 50);
 	}]]
 local DefaultTheme = {
-	SchemeColor = Color3.fromRGB(38, 175, 136);
+	Scheme = Color3.fromRGB(38, 175, 136);
 	Background = Color3.fromRGB(31, 32, 40);
 	Topbar = Color3.fromRGB(22, 23, 30);
 	Content = Color3.fromRGB(41, 41, 50);
 	ScrollbarTrack = Color3.fromRGB(33, 34, 40);
-	TextColor = Color3.fromRGB(255, 255, 255);
-	ItemColor = Color3.fromRGB(51, 51, 60);
+	Text = Color3.fromRGB(255, 255, 255);
+	Item = Color3.fromRGB(51, 51, 60);
 }
 
 local Workspace = game:GetService("Workspace")
@@ -332,7 +332,7 @@ end
 function Utility:Ripple(Item,Position,Theme)
 	local Ripple = Instance.new("Frame")
 
-	Ripple.BackgroundColor3 = Theme.SchemeColor
+	Ripple.BackgroundColor3 = Theme.Scheme
 	Ripple.BackgroundTransparency = 0.6
 	Ripple.Position = UDim2.new(0,Position.X - Item.AbsolutePosition.X,0,Position.Y - Item.AbsolutePosition.Y)
 	Ripple.Size = UDim2.new(0,0,0,0)
@@ -381,7 +381,7 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 	NameText.TextSize = 18
 	NameText.TextWrapped = true
 	NameText.TextXAlignment = Enum.TextXAlignment.Left
-	Utility:ApplyTheme(NameText,"TextColor3",Theme,"TextColor")
+	Utility:ApplyTheme(NameText,"TextColor3",Theme,"Text")
 	NameText.Parent = Item
 
 	if IconImage then
@@ -392,7 +392,7 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 		IconImage.Size = UDim2.new(1,-15,0,Item.AbsoluteSize.Y - 15)
 		IconImage.ZIndex = 0
 		IconImage.Image = Icon
-		Utility:ApplyTheme(IconImage,"ImageColor3",Theme,(BackgroundStyle == "SchemeColor" and "TextColor" or "SchemeColor"))
+		Utility:ApplyTheme(IconImage,"ImageColor3",Theme,(BackgroundStyle == "Scheme" and "Text" or "Scheme"))
 		Instance.new("UIAspectRatioConstraint",IconImage)
 		IconImage.Parent = Item
 	end
@@ -408,7 +408,7 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 		DescriptionButton.Size = UDim2.new(1,-15,0,Item.AbsoluteSize.Y - 15)
 		DescriptionButton.ZIndex = 2
 		DescriptionButton.Image = "rbxassetid://8318429389"
-		Utility:ApplyTheme(DescriptionButton,"ImageColor3",Theme,(BackgroundStyle == "SchemeColor" and "TextColor" or "SchemeColor"))
+		Utility:ApplyTheme(DescriptionButton,"ImageColor3",Theme,(BackgroundStyle == "Scheme" and "Text" or "Scheme"))
 		Instance.new("UIAspectRatioConstraint",DescriptionButton)
 		DescriptionButton.Parent = Item
 
@@ -527,7 +527,7 @@ function UI:CreateLib(Title,Theme,Position)
 	Header.TextScaled = true
 	Header.TextWrapped = true
 	Header.TextXAlignment = Enum.TextXAlignment.Left
-	ApplyTheme(Header,"TextColor3","TextColor")
+	ApplyTheme(Header,"TextColor3","Text")
 	Header.Parent = Topbar
 
 	CloseButton.AnchorPoint = Vector2.new(1,0.5)
@@ -537,7 +537,7 @@ function UI:CreateLib(Title,Theme,Position)
 	CloseButton.Position = UDim2.new(1,-5,0.5,0)
 	CloseButton.Size = UDim2.new(1,-10,1,-10)
 	CloseButton.Image = "rbxassetid://8324551908"
-	ApplyTheme(CloseButton,"ImageColor3","TextColor")
+	ApplyTheme(CloseButton,"ImageColor3","Text")
 	Instance.new("UIAspectRatioConstraint",CloseButton)
 	CloseButton.Parent = Topbar
 
@@ -551,7 +551,7 @@ function UI:CreateLib(Title,Theme,Position)
 	Tabs.ScrollBarImageTransparency = 1
 	Tabs.ScrollBarThickness = 0
 	Utility:SmoothScroll(Tabs,ScrollSmoothness)
-	ApplyTheme(Tabs,"ScrollBarImageColor3","TextColor")
+	ApplyTheme(Tabs,"ScrollBarImageColor3","Text")
 	Tabs.Parent = Main
 
 	TabsUIList.Padding = UDim.new(0,4)
@@ -583,7 +583,7 @@ function UI:CreateLib(Title,Theme,Position)
 	DescriptionHolder.Position = UDim2.new(0.5,0,1.5,0)
 	DescriptionHolder.ZIndex = 3
 	Utility:Corner(DescriptionHolder,CornerSize)
-	ApplyTheme(DescriptionHolder,"BackgroundColor3","SchemeColor")
+	ApplyTheme(DescriptionHolder,"BackgroundColor3","Scheme")
 	DescriptionHolder.Parent = Main
 
 	DescriptionText.AnchorPoint = Vector2.new(0.5,0.5)
@@ -597,7 +597,7 @@ function UI:CreateLib(Title,Theme,Position)
 	DescriptionText.TextSize = 16
 	DescriptionText.TextWrapped = true
 	DescriptionText.TextXAlignment = Enum.TextXAlignment.Left
-	ApplyTheme(DescriptionText,"TextColor3","TextColor")
+	ApplyTheme(DescriptionText,"TextColor3","Text")
 	DescriptionText.Parent = DescriptionHolder
 
 	Main.Position = Position or UDim2.new(0,Workspace.CurrentCamera.ViewportSize.X/2 - Main.AbsoluteSize.X/2,0,Workspace.CurrentCamera.ViewportSize.Y/2 - Main.AbsoluteSize.Y/2)
@@ -657,8 +657,8 @@ function UI:CreateLib(Title,Theme,Position)
 		TabButton.TextSize = 16
 		TabButton.TextWrapped = true
 		Utility:Corner(TabButton,CornerSize)
-		ApplyTheme(TabButton,"BackgroundColor3","SchemeColor")
-		ApplyTheme(TabButton,"TextColor3","TextColor")
+		ApplyTheme(TabButton,"BackgroundColor3","Scheme")
+		ApplyTheme(TabButton,"TextColor3","Text")
 		TabButton.Parent = Tabs
 
 		ContentList.AnchorPoint = Vector2.new(0.5,0.5)
@@ -674,7 +674,7 @@ function UI:CreateLib(Title,Theme,Position)
 		Utility:ScrollBar(ContentList)
 		Utility:ScrollTrack(ContentList,CurrentTheme)
 		Utility:SmoothScroll(ContentList,ScrollSmoothness)
-		ApplyTheme(ContentList,"ScrollBarImageColor3","TextColor")
+		ApplyTheme(ContentList,"ScrollBarImageColor3","Text")
 		ContentList.Parent = Content
 
 		ContentUIList.Padding = UDim.new(0,16)
@@ -690,7 +690,7 @@ function UI:CreateLib(Title,Theme,Position)
 			
 			local SectionHolder = Instance.new("Frame")
 			local SectionUIList = Instance.new("UIListLayout")
-			local SectionHeader,OnDisplayDescription = CreateItem(Name,Data.Icon or nil,Description,"SchemeColor")
+			local SectionHeader,OnDisplayDescription = CreateItem(Name,Data.Icon or nil,Description,"Scheme")
 
 			SectionHolder.BackgroundTransparency = 1
 			SectionHolder.BorderSizePixel = 0
@@ -717,7 +717,7 @@ function UI:CreateLib(Title,Theme,Position)
 				Name = Name or "Label"
 				Data = Data or {}
 				
-				local LabelItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177477893",Description,"ItemColor")
+				local LabelItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177477893",Description,"Item")
 				LabelItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				LabelItem.Parent = SectionHolder
 
@@ -742,7 +742,7 @@ function UI:CreateLib(Title,Theme,Position)
 				Callback = Callback or function() end
 				Data = Data or {}
 				
-				local ButtonItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8318711356",Description,"ItemColor")
+				local ButtonItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8318711356",Description,"Item")
 				local Input = Utility:AddItemButton(ButtonItem)
 
 				ButtonItem.LayoutOrder = #SectionHolder:GetChildren() - 1
@@ -779,7 +779,7 @@ function UI:CreateLib(Title,Theme,Position)
 				
 				local State = Data.State or false
 				
-				local ToggleItem,OnDisplayDescription = CreateItem(Name,"rbxassetid://8318488758",Description,"ItemColor")
+				local ToggleItem,OnDisplayDescription = CreateItem(Name,"rbxassetid://8318488758",Description,"Item")
 				local Input = Utility:AddItemButton(ToggleItem)
 				local Circle = ToggleItem:FindFirstChildOfClass("ImageLabel")
 				local Checked = Instance.new("Frame")
@@ -792,7 +792,7 @@ function UI:CreateLib(Title,Theme,Position)
 				Checked.Position = UDim2.new(0.5,0,0.5,0)
 				Checked.Size = UDim2.new(1,-12,1,-12)
 				Utility:Corner(Checked,UDim.new(1,0))
-				ApplyTheme(Checked,"BackgroundColor3","SchemeColor")
+				ApplyTheme(Checked,"BackgroundColor3","Scheme")
 				Checked.Parent = Circle
 
 				local Toggle = {}
@@ -841,7 +841,7 @@ function UI:CreateLib(Title,Theme,Position)
 				
 				local Value = Data.Value or Min
 				
-				local SliderItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8324589323",Description,"ItemColor")
+				local SliderItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8324589323",Description,"Item")
 				local Input = Utility:AddItemButton(SliderItem)
 				local SliderHolder = Instance.new("Frame")
 				local SliderValue = Instance.new("Frame")
@@ -858,13 +858,13 @@ function UI:CreateLib(Title,Theme,Position)
 				SliderHolder.ClipsDescendants = true
 				Utility:Corner(SliderHolder,UDim.new(1,0))
 				ApplyTheme(SliderHolder,"BackgroundColor3",function()
-					return Color3.new(math.clamp(CurrentTheme.ItemColor.R - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.G - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.B - 10/255,0,1))
+					return Color3.new(math.clamp(CurrentTheme.Item.R - 10/255,0,1),math.clamp(CurrentTheme.Item.G - 10/255,0,1),math.clamp(CurrentTheme.Item.B - 10/255,0,1))
 				end)
 				SliderHolder.Parent = SliderItem
 				
 				SliderValue.Size = UDim2.new(0,0,1,0)
 				Utility:Corner(SliderValue,UDim.new(1,0))
-				ApplyTheme(SliderValue,"BackgroundColor3","SchemeColor")
+				ApplyTheme(SliderValue,"BackgroundColor3","Scheme")
 				SliderValue.Parent = SliderHolder
 				
 				local Slider = {}
@@ -919,7 +919,7 @@ function UI:CreateLib(Title,Theme,Position)
 				Callback = Callback or function() end
 				Data = Data or {}
 
-				local TextBoxItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177467437",Description,"ItemColor")
+				local TextBoxItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177467437",Description,"Item")
 				local Input = Utility:AddItemButton(TextBoxItem)
 				local TextBoxHolder = Instance.new("Frame")
 				local TextBoxInstance = Instance.new("TextBox")
@@ -936,7 +936,7 @@ function UI:CreateLib(Title,Theme,Position)
 				TextBoxHolder.ClipsDescendants = true
 				Utility:Corner(TextBoxHolder,CornerSize)
 				ApplyTheme(TextBoxHolder,"BackgroundColor3",function()
-					return Color3.new(math.clamp(CurrentTheme.ItemColor.R - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.G - 10/255,0,1),math.clamp(CurrentTheme.ItemColor.B - 10/255,0,1))
+					return Color3.new(math.clamp(CurrentTheme.Item.R - 10/255,0,1),math.clamp(CurrentTheme.Item.G - 10/255,0,1),math.clamp(CurrentTheme.Item.B - 10/255,0,1))
 				end)
 				TextBoxHolder.Parent = TextBoxItem
 				
@@ -950,7 +950,7 @@ function UI:CreateLib(Title,Theme,Position)
 				TextBoxInstance.PlaceholderText = Data.PlaceholderText or "..."
 				TextBoxInstance.TextXAlignment = Enum.TextXAlignment.Left
 				TextBoxInstance.TextScaled = true
-				ApplyTheme(TextBoxInstance,"TextColor3","TextColor")
+				ApplyTheme(TextBoxInstance,"TextColor3","Text")
 				TextBoxInstance.Parent = TextBoxHolder
 
 				local TextBox = {}
@@ -1009,7 +1009,7 @@ function UI:CreateLib(Title,Theme,Position)
 				Callback = Callback or function() end
 				Data = Data or {}
 
-				local ColorPickerItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177457893",Description,"ItemColor")
+				local ColorPickerItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177457893",Description,"Item")
 				local Input = Utility:AddItemButton(ColorPickerItem)
 				local ColorWheel = Instance.new("ImageButton")
 				local ColorPickerImage = Instance.new("ImageLabel")
