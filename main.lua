@@ -1003,7 +1003,7 @@ function UI:CreateLib(Title,Theme,Position)
 				TextBox:SetValue(Data.Value or "")
 				return TextBox
 			end
-			function Section:NewColorPicker(Name,Description,Callback,Data)
+			function Section:NewColorPicker(Name,Description,Color,Callback,Data)
 				Name = Name or "ColorPicker"
 				Data = Data or {}
 
@@ -1170,7 +1170,7 @@ function UI:CreateLib(Title,Theme,Position)
 					end)
 				end
 				
-				ColorPicker:SetColor(Data.Color or Color3.new(1,1,1))
+				ColorPicker:SetColor(Color or Color3.new(1,1,1))
 				return ColorPicker
 			end
 			
