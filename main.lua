@@ -421,7 +421,7 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 end
 function Utility:AddItemButton(Item)
 	local Button = Instance.new("TextButton")
-
+	
 	Button.BackgroundTransparency = 1
 	Button.BorderSizePixel = 0
 	Button.Size = UDim2.new(1,0,1,0)
@@ -703,11 +703,10 @@ function UI:CreateLib(Title,Theme,Position)
 			SectionUIList.SortOrder = Enum.SortOrder.LayoutOrder
 			SectionUIList.Parent = SectionHolder
 			
-			SectionHeader.Visible = Data.Hidden == true and false or true
+			SectionHeader.Visible = Data.Hidden or true
 			SectionHeader.Parent = SectionHolder
 
 			local Section = {}
-			
 			function Section:UpdateName(NewName)
 				SectionHeader:FindFirstChildOfClass("TextLabel").Text = NewName
 			end
@@ -718,13 +717,11 @@ function UI:CreateLib(Title,Theme,Position)
 				Name = Name or "Label"
 				Data = Data or {}
 				
-				local LabelItem,OnDisplayDescription = CreateItem(Name,Data.Icon or nil,Description,"ItemColor")
-
+				local LabelItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177477893",Description,"ItemColor")
 				LabelItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				LabelItem.Parent = SectionHolder
 
 				local Label = {}
-
 				function Label:UpdateName(NewName)
 					LabelItem:FindFirstChildOfClass("TextLabel").Text = NewName
 				end
@@ -754,6 +751,9 @@ function UI:CreateLib(Title,Theme,Position)
 				local Button = {}
 				function Button:UpdateName(NewName)
 					ButtonItem:FindFirstChildOfClass("TextLabel").Text = NewName
+				end
+				function Button:UpdateIcon(NewIcon)
+					ButtonItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
 				end
 
 				Input.MouseButton1Click:Connect(function()
@@ -798,6 +798,9 @@ function UI:CreateLib(Title,Theme,Position)
 				local Toggle = {}
 				function Toggle:UpdateName(NewName)
 					ToggleItem:FindFirstChildOfClass("TextLabel").Text = NewName
+				end
+				function Toggle:UpdateIcon(NewIcon)
+					ToggleItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
 				end
 				function Toggle:SetState(NewState)
 					State = NewState
@@ -868,6 +871,9 @@ function UI:CreateLib(Title,Theme,Position)
 				function Slider:UpdateName(NewName)
 					SliderItem:FindFirstChildOfClass("TextLabel").Text = NewName
 				end
+				function Slider:UpdateIcon(NewIcon)
+					SliderItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
+				end
 				function Slider:SetValue(NewValue)
 					Value = math.clamp(NewValue,Min,Max)
 					SliderValue.Size = UDim2.new(math.clamp((Value - Min)/(Max - Min),0,1),0,1,0)
@@ -913,7 +919,7 @@ function UI:CreateLib(Title,Theme,Position)
 				Callback = Callback or function() end
 				Data = Data or {}
 
-				local TextBoxItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8324589323",Description,"ItemColor")
+				local TextBoxItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177467437",Description,"ItemColor")
 				local Input = Utility:AddItemButton(TextBoxItem)
 				local TextBoxHolder = Instance.new("Frame")
 				local TextBoxInstance = Instance.new("TextBox")
@@ -950,6 +956,9 @@ function UI:CreateLib(Title,Theme,Position)
 				local TextBox = {}
 				function TextBox:UpdateName(NewName)
 					TextBoxItem:FindFirstChildOfClass("TextLabel").Text = NewName
+				end
+				function TextBox:UpdateIcon(NewIcon)
+					TextBoxItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
 				end
 				function TextBox:UpdatePlaceholderText(NewPlaceholderText)
 					TextBoxInstance.PlaceholderText = NewPlaceholderText
@@ -994,6 +1003,176 @@ function UI:CreateLib(Title,Theme,Position)
 				TextBox:SetValue(Data.Value or "")
 				return TextBox
 			end
+			function Section:NewColorPicker(Name,Description,Callback,Data)
+				Name = Name or "ColorPicker"
+				Data = Data or {}
+
+				local ColorPickerItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177457893",Description,"ItemColor")
+				local Input = Utility:AddItemButton(ColorPickerItem)
+				local ColorWheel = Instance.new("ImageButton")
+				local ColorPickerImage = Instance.new("ImageLabel")
+				local Value = Instance.new("TextButton")
+				local ValueGradient = Instance.new("UIGradient")
+				local ValueSlider = Instance.new("Frame")
+				
+				local ItemSize = ColorPickerItem.AbsoluteSize
+				local h,s,v = 0,1,1
+				
+				ColorPickerItem.LayoutOrder = #SectionHolder:GetChildren() - 1
+				ColorPickerItem.Parent = SectionHolder
+				
+				ColorWheel.AutoButtonColor = false
+				ColorWheel.BackgroundTransparency = 1
+				ColorWheel.BorderSizePixel = 0
+				ColorWheel.Position = UDim2.new(0,12,0,ItemSize.Y + 12)
+				ColorWheel.Size = UDim2.new(0,128,0,128)
+				ColorWheel.Image = "rbxassetid://6020299385"
+				ColorWheel.Parent = ColorPickerItem
+				
+				ColorPickerImage.AnchorPoint = Vector2.new(0.5,0.5)
+				ColorPickerImage.BackgroundTransparency = 1
+				ColorPickerImage.BorderSizePixel = 0
+				ColorPickerImage.Size = UDim2.new(0.09,0,0.09,0)
+				ColorPickerImage.Image = "rbxassetid://3678860011"
+				ColorPickerImage.Parent = ColorWheel
+				
+				Value.AutoButtonColor = false
+				Value.BackgroundColor3 = Color3.new(1,1,1)
+				Value.Position = UDim2.new(0,152,0,ItemSize.Y + 12)
+				Value.Size = UDim2.new(0,30,0,128)
+				Value.Text = ""
+				Utility:Corner(Value,CornerSize)
+				Value.Parent = ColorPickerItem
+				
+				ValueGradient.Rotation = 90
+				ValueGradient.Parent = Value
+				
+				ValueSlider.AnchorPoint = Vector2.new(0.5,0.5)
+				ValueSlider.BackgroundColor3 = Color3.new(1,1,1)
+				ValueSlider.Size = UDim2.new(1,6,0,6)
+				Utility:Corner(ValueSlider,UDim.new(1,0))
+				ValueSlider.Parent = Value
+				
+				local ColorPicker = {}
+				ColorPicker.Focused = false
+				local function UpdateColors()
+					h = math.clamp((math.pi - math.atan2(ColorPickerImage.Position.Y.Offset - 64,ColorPickerImage.Position.X.Offset - 64)) / (math.pi * 2),0,1)
+					s = math.clamp(math.abs((ColorPickerImage.AbsolutePosition - (ColorWheel.AbsolutePosition + Vector2.new(64,64))).Magnitude) / 64,0,1)
+					v = math.clamp(1 - (ValueSlider.Position.Y.Offset / 128),0,1)
+					
+					ValueGradient.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
+						ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
+					})
+					Utility:CallCallback(Callback,ColorPicker:GetColor())
+				end
+				local function UpdatePickers()
+					local x = -math.cos(h * math.pi * 2) * s * 64
+					local y = math.sin(h * math.pi * 2) * s * 64
+					ColorPickerImage.Position = UDim2.new(0,x + 64,0,y + 64)
+					
+					ValueSlider.Position = UDim2.new(0.5,0,0,(1 - v) * 128)
+					ValueGradient.Color = ColorSequence.new({
+						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
+						ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
+					})
+				end
+				function ColorPicker:UpdateName(NewName)
+					ColorPickerItem:FindFirstChildOfClass("TextLabel").Text = NewName
+				end
+				function ColorPicker:UpdateIcon(NewIcon)
+					ColorPickerItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
+				end
+				function ColorPicker:SetFocused(Focused)
+					if ColorPicker.Focused == Focused then
+						return
+					end
+					ColorPicker.Focused = Focused
+					
+					Utility:Tween(ColorPickerItem,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{
+						Size = UDim2.new(1,0,0,ItemSize.Y + (Focused and 152 or 0))
+					})
+				end
+				function ColorPicker:ToggleFocused()
+					return ColorPicker:SetFocused(not ColorPicker.Focused)
+				end
+				function ColorPicker:SetColor(Color)
+					h,s,v = Color:ToHSV()
+					
+					UpdatePickers()
+					Utility:CallCallback(Callback,ColorPicker:GetColor())
+				end
+				function ColorPicker:GetColor()
+					return Color3.fromHSV(h,s,v)
+				end
+				
+				Input.MouseButton1Down:Connect(function()
+					ColorPicker:ToggleFocused()
+					Utility:Ripple(ColorPickerItem,Vector2.new(Mouse.X,Mouse.Y),CurrentTheme)
+				end)
+				ColorWheel.MouseButton1Down:Connect(function()
+					local MouseMove
+					local MouseUp
+					
+					local function Update()
+						local ValueX = Mouse.X - ColorWheel.AbsolutePosition.X
+						local ValueY = Mouse.Y - ColorWheel.AbsolutePosition.Y
+						if (Vector2.new(ValueX,ValueY) - Vector2.new(64,64)).Magnitude > 64 then
+							return
+						end
+						
+						ColorPickerImage.Position = UDim2.new(0,ValueX,0,ValueY)
+						UpdateColors()
+					end
+					
+					MouseMove = Mouse.Move:Connect(Update)
+					MouseUp = UIS.InputEnded:Connect(function(Input)
+						if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+							MouseMove:Disconnect()
+							MouseUp:Disconnect()
+
+							Update()
+						end
+					end)
+
+					Update()
+				end)
+				Value.MouseButton1Down:Connect(function()
+					local MouseMove
+					local MouseUp
+					
+					local function Update()
+						local Value = Mouse.Y - Value.AbsolutePosition.Y
+						if Value < 0 or Value > 128 then
+							return
+						end
+						
+						ValueSlider.Position = UDim2.new(0.5,0,0,Value)
+						UpdateColors()
+					end
+					
+					MouseMove = Mouse.Move:Connect(Update)
+					MouseUp = UIS.InputEnded:Connect(function(Input)
+						if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+							MouseMove:Disconnect()
+							MouseUp:Disconnect()
+
+							Update()
+						end
+					end)
+
+					Update()
+				end)
+
+				if OnDisplayDescription then
+					OnDisplayDescription:Connect(function()
+						DisplayDescription(Description)
+					end)
+				end
+				
+				ColorPicker:SetColor(Data.Color or Color3.new(1,1,1))
+				return ColorPicker
+			end
 			
 			if OnDisplayDescription then
 				OnDisplayDescription:Connect(function()
@@ -1002,7 +1181,6 @@ function UI:CreateLib(Title,Theme,Position)
 			end
 
 			Utility:SyncSize(SectionHolder,SectionUIList)
-
 			return Section
 		end
 
@@ -1046,5 +1224,34 @@ function UI:CreateLib(Title,Theme,Position)
 	Lib:EnableUI(true)
 	return Lib
 end
+
+local Rainbow = false
+
+local Lib = UI:CreateLib("Ew Hub - Test")
+local Tab1 = Lib:NewTab("Tab1")
+local Tab2 = Lib:NewTab("Tab2")
+
+local Tab1_Section1 = Tab1:NewSection("Section1","Section description",{
+	Icon = "rbxassetid://7052906634";
+})
+Tab1_Section1:NewLabel("Test label")
+Tab1_Section1:NewButton("Test button","Test button description",function() print("Pressed!") end)
+Tab1_Section1:NewButton("Test fail button","Test fail button description",function() return false end)
+Tab1_Section1:NewButton("Test error button","Test error button description",function() error() end)
+Tab1_Section1:NewToggle("Toggle","Toggle",function(Value) print("Pressed!",Value) end)
+Tab1_Section1:NewSlider("Walkspeed","Sets your walkspeed",16,500,function(Value)
+	game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = Value
+end)
+Tab1_Section1:NewSlider("Jumppower","Sets your jumppower",50,500,function(Value)
+	game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").JumpPower = Value
+end)
+Tab1_Section1:NewTextBox("TextBox","Default",function(Value) print(Value) end,{CallbackMode = "Default",Value = "Default value"})
+Tab1_Section1:NewTextBox("TextBox","OnEnterPressed",function(Value) print(Value) end,{CallbackMode = "OnEnterPressed",PlaceholderText = "Placeholder"})
+Tab1_Section1:NewTextBox("TextBox","OnFocusLost",function(Value) print(Value) end,{CallbackMode = "OnFocusLost"})
+
+local Tab2_Section1 = Tab2:NewSection("Section1")
+Tab2_Section1:NewColorPicker("SchemeColor","Set the scheme color",function(Value)
+	Lib:UpdateThemeColor("SchemeColor",Value)
+end)
 
 return UI
