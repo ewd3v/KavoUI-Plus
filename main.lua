@@ -1128,6 +1128,7 @@ function UI:CreateLib(Title,Theme,Position)
 					end
 					ColorPicker.Focused = Focused
 					
+					UpdatePickers()
 					Utility:Tween(ColorPickerItem,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{
 						Size = UDim2.new(1,0,0,ItemSize.Y + (Focused and 152 or 0))
 					})
