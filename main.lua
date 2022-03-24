@@ -28,6 +28,7 @@ local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
+local TextService = game:GetService("TextService")
 
 local Player = Players.LocalPlayer
 local Mouse = Player:GetMouse()
@@ -46,6 +47,13 @@ function Utility:CallCallback(Callback,...)
 		warn(r)
 	end
 	return s == true and r ~= false
+end
+function Utility:IsColorDark(Color)
+	return math.sqrt(
+		0.299 * (Color.R ^ 2) +
+		0.587 * (Color.G ^ 2) +
+		0.114 * (Color.B ^ 2)
+	) < 0.5
 end
 
 local Styles = {}
@@ -334,7 +342,6 @@ end
 
 function Utility:Ripple(Item,Position,Theme)
 	local Ripple = Instance.new("Frame")
-
 	Ripple.BackgroundColor3 = Theme.Scheme
 	Ripple.BackgroundTransparency = 0.6
 	Ripple.Position = UDim2.new(0,Position.X - Item.AbsolutePosition.X,0,Position.Y - Item.AbsolutePosition.Y)
@@ -637,7 +644,7 @@ function UI:CreateLib(Title,Theme,Position)
 	function Lib:ToggleUI()
 		return Lib:EnableUI(not Lib.Enabled)
 	end
-	function Lib:NewTab(Name)
+	function Lib:NewTab(Name,Data)
 		Name = Name or "Tab "..tostring(#Tabs:GetChildren())
 		if Content:FindFirstChild(Name) then error("Tab "..tostring(Name).." already exists.") end
 
@@ -1014,7 +1021,7 @@ function UI:CreateLib(Title,Theme,Position)
 
 				local ColorPickerItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177457893",Description,"Item")
 				local Input = Utility:AddItemButton(ColorPickerItem)
-				local Preview = Instance.new("Frame")
+				local Preview = Instance.new("TextLabel")
 				local ColorWheel = Instance.new("ImageButton")
 				local ColorPickerImage = Instance.new("ImageLabel")
 				local Value = Instance.new("TextButton")
@@ -1029,7 +1036,7 @@ function UI:CreateLib(Title,Theme,Position)
 				
 				Preview.AnchorPoint = Vector2.new(1,0.5)
 				Preview.Position = UDim2.new(1,-35,0,ItemSize.Y/2)
-				Preview.Size = UDim2.new(0,30,0,ItemSize.Y - 15)
+				Preview.TextSize = 8
 				Utility:Corner(Preview,UDim.new(1,0))
 				Preview.Parent = ColorPickerItem
 				
@@ -1067,18 +1074,38 @@ function UI:CreateLib(Title,Theme,Position)
 				
 				local ColorPicker = {}
 				ColorPicker.Focused = false
+				local function UpdatePreview()
+					local Color = ColorPicker:GetColor()
+					local Text = tostring(math.round(Color.R * 255))..", "..tostring(math.round(Color.G * 255))..", "..tostring(math.round(Color.B * 255))
+					local TextSize = TextService:GetTextSize(Text,16,Enum.Font.SourceSans,Vector2.new(math.huge,math.huge))
+					
+					Preview.BackgroundColor3 = Color
+					Preview.Size = UDim2.new(0,TextSize.X + 12,0,ItemSize.Y - 15)
+					Preview.Text = Text
+					Preview.TextColor3 = Utility:IsColorDark(Color) and Color3.new(1,1,1) or Color3.new(0,0,0)
+				end
 				local function UpdateColors()
 					h = math.clamp((math.pi - math.atan2(ColorPickerImage.Position.Y.Offset - 64,ColorPickerImage.Position.X.Offset - 64)) / (math.pi * 2),0,1)
 					s = math.clamp(math.abs((ColorPickerImage.AbsolutePosition - (ColorWheel.AbsolutePosition + Vector2.new(64,64))).Magnitude) / 64,0,1)
 					v = math.clamp(1 - (ValueSlider.Position.Y.Offset / 128),0,1)
 					
+					UpdatePreview()
+					if not ColorPicker.Focused then
+						return
+					end
+					
 					ValueGradient.Color = ColorSequence.new({
 						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
 						ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
 					})
-					Preview.BackgroundColor3 = ColorPicker:GetColor()
 				end
 				local function UpdatePickers()
+					UpdatePreview()
+					
+					if not ColorPicker.Focused then
+						return
+					end
+					
 					local x = -math.cos(h * math.pi * 2) * s * 64
 					local y = math.sin(h * math.pi * 2) * s * 64
 					ColorPickerImage.Position = UDim2.new(0,x + 64,0,y + 64)
@@ -1088,7 +1115,6 @@ function UI:CreateLib(Title,Theme,Position)
 						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
 						ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
 					})
-					Preview.BackgroundColor3 = ColorPicker:GetColor()
 				end
 				function ColorPicker:UpdateName(NewName)
 					ColorPickerItem:FindFirstChildOfClass("TextLabel").Text = NewName
