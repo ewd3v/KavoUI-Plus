@@ -458,8 +458,8 @@ function UI:CreateLib(Title,Theme,Position)
 	local DescriptionHolder = Instance.new("Frame")
 	local DescriptionText = Instance.new("TextLabel")
 
-	local function ApplyTheme(obj,Property,Style)
-		return Utility:ApplyTheme(obj,Property,CurrentTheme,Style)
+	local function ApplyTheme(obj,Property,Style,Function)
+		return Utility:ApplyTheme(obj,Property,CurrentTheme,Style,Function)
 	end
 	local function CreateItem(Name,Icon,Description,BackgroundStyle)
 		return Utility:CreateItem(Name,Icon,Description,CurrentTheme,BackgroundStyle)
