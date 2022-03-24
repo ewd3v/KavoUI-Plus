@@ -49,7 +49,7 @@ function Utility:CallCallback(Callback,...)
 end
 
 local Styles = {}
-function Utility:ApplyTheme(obj,Property,Theme,Style)
+function Utility:ApplyTheme(obj,Property,Theme,Style,Function)
 	if not Theme then Theme = DefaultTheme end
 
 	assert(obj ~= nil,"No object given.")
@@ -59,34 +59,34 @@ function Utility:ApplyTheme(obj,Property,Theme,Style)
 		assert(Theme[Style] ~= nil,"Style "..tostring(Style).." does not exist.")
 	end
 	
-	if typeof(Style) == "string" then
-		obj[Property] = Theme[Style]
+	if Function then
+		obj[Property] = Function()
 	else
-		obj[Property] = Style()
+		obj[Property] = Theme[Style]
 	end
 
 	if not Styles[obj] then Styles[obj] = {} end
-	Styles[obj][Property] = Style
+	Styles[obj][Property] = {Style,Function}
 end
 function Utility:UpdateTheme(NewTheme)
 	for obj,Data in pairs(Styles) do
-		for Property,Style in pairs(Data) do
-			if typeof(Style) == "string" then
-				obj[Property] = NewTheme[Style]
+		for Property,StyleData in pairs(Data) do
+			if StyleData[2] then
+				StyleData[2]()
 			else
-				obj[Property] = Style()
+				obj[Property] = NewTheme[StyleData[1]]
 			end
 		end
 	end
 end
-function Utility:UpdateThemeColor(NewTheme,_Style)
+function Utility:UpdateThemeColor(NewTheme,Style)
 	for obj,Data in pairs(Styles) do
-		for Property,Style in pairs(Data) do
-			if Style == _Style then
-				if typeof(Style) == "string" then
-					obj[Property] = NewTheme[Style]
+		for Property,StyleData in pairs(Data) do
+			if StyleData[1] == Style then
+				if StyleData[2] then
+					obj[Property] = StyleData[2]()
 				else
-					obj[Property] = Style()
+					obj[Property] = NewTheme[StyleData[1]]
 				end
 			end
 		end
@@ -860,7 +860,7 @@ function UI:CreateLib(Title,Theme,Position)
 				SliderHolder.Size = UDim2.new(1,-12,0,6)
 				SliderHolder.ClipsDescendants = true
 				Utility:Corner(SliderHolder,UDim.new(1,0))
-				ApplyTheme(SliderHolder,"BackgroundColor3",function()
+				ApplyTheme(SliderHolder,"BackgroundColor3","Item",function()
 					return Color3.new(math.clamp(CurrentTheme.Item.R - 10/255,0,1),math.clamp(CurrentTheme.Item.G - 10/255,0,1),math.clamp(CurrentTheme.Item.B - 10/255,0,1))
 				end)
 				SliderHolder.Parent = SliderItem
@@ -938,7 +938,7 @@ function UI:CreateLib(Title,Theme,Position)
 				TextBoxHolder.Size = UDim2.new(1,-12,0,24)
 				TextBoxHolder.ClipsDescendants = true
 				Utility:Corner(TextBoxHolder,CornerSize)
-				ApplyTheme(TextBoxHolder,"BackgroundColor3",function()
+				ApplyTheme(TextBoxHolder,"BackgroundColor3","Item",function()
 					return Color3.new(math.clamp(CurrentTheme.Item.R - 10/255,0,1),math.clamp(CurrentTheme.Item.G - 10/255,0,1),math.clamp(CurrentTheme.Item.B - 10/255,0,1))
 				end)
 				TextBoxHolder.Parent = TextBoxItem
