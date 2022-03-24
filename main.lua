@@ -42,6 +42,9 @@ function Utility:Tween(obj,Info,Props)
 end
 function Utility:CallCallback(Callback,...)
 	local s,r = pcall(Callback,...)
+	if not s then
+		warn(r)
+	end
 	return s == true and r ~= false
 end
 
@@ -1057,9 +1060,9 @@ function UI:CreateLib(Title,Theme,Position)
 				ValueGradient.Parent = Value
 				
 				ValueSlider.AnchorPoint = Vector2.new(0.5,0.5)
-				ValueSlider.BackgroundColor3 = Color3.new(1,1,1)
 				ValueSlider.Size = UDim2.new(1,6,0,6)
 				Utility:Corner(ValueSlider,UDim.new(1,0))
+				ApplyTheme(ValueSlider,"BackgroundColor3","Text")
 				ValueSlider.Parent = Value
 				
 				local ColorPicker = {}
