@@ -529,7 +529,11 @@ function UI:CreateLib(Title,Theme,Position)
 	Gui.Name = LibName
 	Gui.ResetOnSpawn = false
 	Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-
+	
+	pcall(function()
+		Gui.OnTopOfCoreBlur = true
+	end)
+	
 	Main.Size = UDim2.new(0,525,0,318)
 	Main.ClipsDescendants = true
 	Utility:Corner(Main,CornerSize)
