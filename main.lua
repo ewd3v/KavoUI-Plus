@@ -55,6 +55,20 @@ function Utility:IsColorDark(Color)
 		0.114 * (Color.B ^ 2)
 	) < 0.5
 end
+function Utility:EditThemeStyle(Theme,Style,Color)
+	local Copy = {}
+	for Style,Color in pairs(Theme) do
+		Copy[Style] = Theme[Style]
+	end
+	
+	if typeof(Color) == "string" then
+		Copy[Style] = Theme[Color]
+	else
+		Copy[Style] = Color
+	end
+	
+	return Copy
+end
 
 local Styles = {}
 function Utility:ApplyTheme(obj,Property,Theme,Style,Function)
@@ -138,11 +152,11 @@ function Utility:SyncCanvasSize(Scroll,UIList)
 	end)
 	Scroll.CanvasSize = UDim2.new(Scroll.CanvasSize.X.Scale,Scroll.CanvasSize.X.Offset,0,UIList.AbsoluteContentSize.Y)
 end
-function Utility:SyncSize(Scroll,UIList)
+function Utility:SyncSize(Frame,UIList)
 	UIList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-		Scroll.Size = UDim2.new(Scroll.Size.X.Scale,Scroll.Size.X.Offset,0,UIList.AbsoluteContentSize.Y)
+		Frame.Size = UDim2.new(Frame.Size.X.Scale,Frame.Size.X.Offset,0,UIList.AbsoluteContentSize.Y)
 	end)
-	Scroll.Size = UDim2.new(Scroll.Size.X.Scale,Scroll.Size.X.Offset,0,UIList.AbsoluteContentSize.Y)
+	Frame.Size = UDim2.new(Frame.Size.X.Scale,Frame.Size.X.Offset,0,UIList.AbsoluteContentSize.Y)
 end
 function Utility:Corner(obj,Radius)
 	assert(obj ~= nil,"No object given.")
@@ -1018,7 +1032,9 @@ function UI:CreateLib(Title,Theme,Position)
 				Color = Color or Color3.new(1,1,1)
 				Callback = Callback or function() end
 				Data = Data or {}
-
+				
+				local h,s,v = 0,1,1
+				
 				local ColorPickerItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177457893",Description,"Item")
 				local Input = Utility:AddItemButton(ColorPickerItem)
 				local Preview = Instance.new("TextLabel")
@@ -1029,13 +1045,12 @@ function UI:CreateLib(Title,Theme,Position)
 				local ValueSlider = Instance.new("Frame")
 				
 				local ItemSize = ColorPickerItem.AbsoluteSize
-				local h,s,v = 0,1,1
 				
 				ColorPickerItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				ColorPickerItem.Parent = SectionHolder
 				
 				Preview.AnchorPoint = Vector2.new(1,0.5)
-				Preview.Position = UDim2.new(1,-35,0,ItemSize.Y/2)
+				Preview.Position = UDim2.new(1,-36,0,ItemSize.Y/2)
 				Preview.TextSize = 8
 				Utility:Corner(Preview,UDim.new(1,0))
 				Preview.Parent = ColorPickerItem
@@ -1214,6 +1229,133 @@ function UI:CreateLib(Title,Theme,Position)
 				
 				ColorPicker:SetColor(Color)
 				return ColorPicker
+			end
+			function Section:NewDropdown(Name,Description,List,Callback,Data)
+				Name = Name or "Dropdown"
+				Data = Data or {}
+				
+				local Selectable = Data.Selectable or false
+				local Selected = Selectable and Data.Selected
+				local ButtonEvents = {}
+				
+				local DropdownItem,OnDisplayDescription = CreateItem(Name..(Selectable and " / "..tostring(Selected) or ""),Data.Icon or "rbxassetid://9185263957",Description,"Item")
+				local Input = Utility:AddItemButton(DropdownItem)
+				local Arrow = Instance.new("ImageLabel")
+				local Holder = Instance.new("Frame")
+				local UIList = Instance.new("UIListLayout")
+				
+				local ItemSize = DropdownItem.AbsoluteSize
+				
+				DropdownItem.LayoutOrder = #SectionHolder:GetChildren() - 1
+				DropdownItem.Parent = SectionHolder
+				
+				Arrow.AnchorPoint = Vector2.new(1,0.5)
+				Arrow.BackgroundTransparency = 1
+				Arrow.BorderSizePixel = 0
+				Arrow.Position = UDim2.new(1,-36,0,DropdownItem.AbsoluteSize.Y/2)
+				Arrow.Size = UDim2.new(1,-15,0,DropdownItem.AbsoluteSize.Y - 15)
+				Arrow.Image = "rbxassetid://9177111416"
+				Instance.new("UIAspectRatioConstraint",Arrow)
+				Arrow.Parent = DropdownItem
+				
+				Holder.AnchorPoint = Vector2.new(0.5,0)
+				Holder.BackgroundTransparency = 1
+				Holder.Position = UDim2.new(0.5,0,0,ItemSize.Y + 12)
+				Holder.ClipsDescendants = true
+				Holder.Parent = DropdownItem
+				
+				UIList.Padding = UDim.new(0,8)
+				UIList.FillDirection = Enum.FillDirection.Vertical
+				UIList.SortOrder = Data.SortOrder or Enum.SortOrder.LayoutOrder
+				UIList.Parent = Holder
+				
+				local Dropdown = {}
+				Dropdown.Focused = false
+				function Dropdown:UpdateName(NewName)
+					Name = NewName
+					DropdownItem:FindFirstChildOfClass("TextLabel").Text = NewName..(Selectable and " / "..tostring(Selected) or "")
+				end
+				function Dropdown:UpdateIcon(NewIcon)
+					DropdownItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
+				end
+				function Dropdown:SetFocused(Focused)
+					if Dropdown.Focused == Focused then
+						return
+					end
+					Dropdown.Focused = Focused
+					
+					Arrow.Rotation = Focused and 180 or 0
+					Utility:Tween(DropdownItem,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{
+						Size = UDim2.new(1,0,0,ItemSize.Y + (Focused and (Holder.AbsoluteSize.Y + 24) or 0))
+					})
+				end
+				function Dropdown:ToggleFocused()
+					return Dropdown:SetFocused(not Dropdown.Focused)
+				end
+				function Dropdown:Refresh(List)
+					for _,Event in ipairs(ButtonEvents) do
+						Event:Disconnect()
+					end
+					table.clear(ButtonEvents)
+					
+					for _,Item in ipairs(Holder:GetChildren()) do
+						if not Item:IsA("UIListLayout") then
+							Item:Destroy()
+						end
+					end
+					
+					for Index,ItemName in ipairs(List) do
+						local Button = Instance.new("TextButton")
+						Button.Name = ItemName
+						Button.AutoButtonColor = false
+						Button.BackgroundTransparency = First and 0 or 1
+						Button.LayoutOrder = #Holder:GetChildren() - 1
+						Button.Size = UDim2.new(1,0,0,30)
+						Button.ClipsDescendants = true
+						Button.Font = Enum.Font.SourceSans
+						Button.Text = ItemName
+						Button.TextScaled = false
+						Button.TextSize = 16
+						Button.TextWrapped = true
+						Utility:Corner(Button,CornerSize)
+						ApplyTheme(Button,"BackgroundColor3","Scheme")
+						ApplyTheme(Button,"TextColor3","Text")
+						Button.Parent = Holder
+						
+						table.insert(ButtonEvents,Button.MouseButton1Down:Connect(function()
+							Utility:Ripple(Button,Vector2.new(Mouse.X,Mouse.Y),Utility:EditThemeStyle(CurrentTheme,"Scheme",Utility:IsColorDark(CurrentTheme.Scheme) and Color3.new(1,1,1) or Color3.new(0,0,0)))
+							
+							if Selectable then
+								Selected = ItemName
+								Dropdown:SetFocused(false)
+								DropdownItem:FindFirstChildOfClass("TextLabel").Text = Name.." / "..tostring(ItemName)
+							end
+							
+							Utility:CallCallback(Callback,ItemName)
+						end))
+					end
+					
+					Holder.Size = UDim2.new(1,-24,0,UIList.AbsoluteContentSize.Y)
+				end
+				if Selectable then
+					function Dropdown:GetSelected()
+						return Selected
+					end
+				end
+				
+				Input.MouseButton1Down:Connect(function()
+					Dropdown:ToggleFocused()
+					Utility:Ripple(DropdownItem,Vector2.new(Mouse.X,Mouse.Y),CurrentTheme)
+				end)
+
+				if OnDisplayDescription then
+					OnDisplayDescription:Connect(function()
+						DisplayDescription(Description)
+					end)
+				end
+				
+				Dropdown:Refresh(List)
+				return Dropdown
 			end
 			
 			if OnDisplayDescription then
