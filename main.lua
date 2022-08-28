@@ -51,8 +51,8 @@ end
 function Utility:IsColorDark(Color)
 	return math.sqrt(
 		0.299 * (Color.R ^ 2) +
-		0.587 * (Color.G ^ 2) +
-		0.114 * (Color.B ^ 2)
+			0.587 * (Color.G ^ 2) +
+			0.114 * (Color.B ^ 2)
 	) < 0.5
 end
 function Utility:EditThemeStyle(Theme,Style,Color)
@@ -60,13 +60,13 @@ function Utility:EditThemeStyle(Theme,Style,Color)
 	for Style,Color in pairs(Theme) do
 		Copy[Style] = Theme[Style]
 	end
-	
+
 	if typeof(Color) == "string" then
 		Copy[Style] = Theme[Color]
 	else
 		Copy[Style] = Color
 	end
-	
+
 	return Copy
 end
 
@@ -80,7 +80,7 @@ function Utility:ApplyTheme(obj,Property,Theme,Style,Function)
 	if typeof(Style) == "string" then
 		assert(Theme[Style] ~= nil,"Style "..tostring(Style).." does not exist.")
 	end
-	
+
 	if Function then
 		obj[Property] = Function()
 	else
@@ -424,7 +424,7 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 	local OnDisplayDescription = nil
 	if DescriptionButton then
 		OnDisplayDescription = Instance.new("BindableEvent")
-		
+
 		DescriptionButton.AnchorPoint = Vector2.new(1,0.5)
 		DescriptionButton.BackgroundTransparency = 1
 		DescriptionButton.BorderSizePixel = 0
@@ -445,7 +445,7 @@ function Utility:CreateItem(Name,Icon,Description,Theme,BackgroundStyle)
 end
 function Utility:AddItemButton(Item)
 	local Button = Instance.new("TextButton")
-	
+
 	Button.BackgroundTransparency = 1
 	Button.BorderSizePixel = 0
 	Button.Size = UDim2.new(1,0,1,0)
@@ -462,11 +462,18 @@ function UI:CreateLib(Title,Theme,Position)
 	for n,v in pairs(Theme or DefaultTheme) do
 		CurrentTheme[n] = v
 	end
+	
+	local Cleanup = {}
+	local function GiveTask(Task)
+		table.insert(Cleanup, Task)
+		
+		return Task
+	end
 
 	local LibName = HttpService:GenerateGUID(false)
 	local DisplayingDescription = false
 	local OnClose = Instance.new("BindableEvent")
-	
+
 	local Gui = Instance.new("ScreenGui")
 	local Main = Instance.new("Frame")
 	local Topbar = Instance.new("Frame")
@@ -529,11 +536,11 @@ function UI:CreateLib(Title,Theme,Position)
 	Gui.Name = LibName
 	Gui.ResetOnSpawn = false
 	Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-	
+
 	pcall(function()
 		Gui.OnTopOfCoreBlur = true
 	end)
-	
+
 	Main.Size = UDim2.new(0,525,0,318)
 	Main.ClipsDescendants = true
 	Utility:Corner(Main,CornerSize)
@@ -634,17 +641,17 @@ function UI:CreateLib(Title,Theme,Position)
 	if syn ~= nil then
 		syn.protect_gui(Gui)
 	end
-	
+
 	local SelectedTab = nil
-	
+
 	local Lib = {}
 	Lib.Enabled = false
 	Lib.OnClose = OnClose.Event
-	
+
 	function Lib:EnableUI(Enabled)
 		if Enabled then
 			Lib.Enabled = true
-			
+
 			if get_hidden_gui ~= nil then
 				Gui.Parent = get_hidden_gui()
 			else
@@ -715,7 +722,7 @@ function UI:CreateLib(Title,Theme,Position)
 		function Tab:NewSection(Name,Description,Data)
 			Name = Name or "Section"
 			Data = Data or {}
-			
+
 			local SectionHolder = Instance.new("Frame")
 			local SectionUIList = Instance.new("UIListLayout")
 			local SectionHeader,OnDisplayDescription = CreateItem(Name,Data.Icon or nil,Description,"Scheme")
@@ -730,7 +737,7 @@ function UI:CreateLib(Title,Theme,Position)
 			SectionUIList.FillDirection = Enum.FillDirection.Vertical
 			SectionUIList.SortOrder = Enum.SortOrder.LayoutOrder
 			SectionUIList.Parent = SectionHolder
-			
+
 			SectionHeader.Visible = Data.Hidden or true
 			SectionHeader.Parent = SectionHolder
 
@@ -744,7 +751,7 @@ function UI:CreateLib(Title,Theme,Position)
 			function Section:NewLabel(Name,Description,Data)
 				Name = Name or "Label"
 				Data = Data or {}
-				
+
 				local LabelItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177477893",Description,"Item")
 				LabelItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				LabelItem.Parent = SectionHolder
@@ -756,7 +763,7 @@ function UI:CreateLib(Title,Theme,Position)
 				function Label:UpdateIcon(NewIcon)
 					LabelItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
 				end
-				
+
 				if OnDisplayDescription then
 					OnDisplayDescription:Connect(function()
 						DisplayDescription(Description)
@@ -769,33 +776,83 @@ function UI:CreateLib(Title,Theme,Position)
 				Name = Name or "Button"
 				Callback = Callback or function() end
 				Data = Data or {}
-				
+
 				local ButtonItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8318711356",Description,"Item")
 				local Input = Utility:AddItemButton(ButtonItem)
-
+				local Keybind = Data.Keybind
+				
+				if Keybind then
+					ButtonItem:FindFirstChildOfClass("TextLabel").Text = string.format("%s [%s]", Name, UIS:GetStringForKeyCode(Keybind))
+				end
+				
 				ButtonItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				ButtonItem.Parent = SectionHolder
-
+				
 				local Button = {}
+				local CurrentName = Name
 				function Button:UpdateName(NewName)
-					ButtonItem:FindFirstChildOfClass("TextLabel").Text = NewName
+					CurrentName = NewName
+					ButtonItem:FindFirstChildOfClass("TextLabel").Text = Keybind ~= nil and string.format("%s [%s]", NewName, UIS:GetStringForKeyCode(Keybind)) or NewName
 				end
 				function Button:UpdateIcon(NewIcon)
 					ButtonItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
 				end
+				function Button:SetKeybind(NewKeybind)
+					Keybind = NewKeybind
+					Button:UpdateName(CurrentName)
+				end
+				function Button:GetKeybind()
+					return Keybind
+				end
 
-				Input.MouseButton1Click:Connect(function()
+				GiveTask(Input.MouseButton1Click:Connect(function()
 					if Utility:CallCallback(Callback) then
 						Utility:Ripple(ButtonItem,Vector2.new(Mouse.X,Mouse.Y),CurrentTheme)
 					else
 						Utility:ItemError(ButtonItem)
 					end
-				end)
+				end))
 				
+				if not Data.BlockKeybindEdit then
+					GiveTask(Input.MouseButton2Click:Connect(function()
+						ButtonItem:FindFirstChildOfClass("TextLabel").Text = string.format("%s [PRESS KEY]", CurrentName)
+						
+						while true do
+							local Input = UIS.InputBegan:Wait()
+							
+							if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode then
+								if Input.KeyCode == Enum.KeyCode.Escape then
+									Button:UpdateName(CurrentName)
+									
+									break
+								end
+								
+								Button:SetKeybind(Input.KeyCode)
+								
+								break
+							end
+						end
+					end))
+				end
+				
+				GiveTask(UIS.InputBegan:Connect(function(Input)
+					if not Keybind then
+						return
+					end
+					
+					if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Keybind then
+						if Utility:CallCallback(Callback) then
+							Utility:Ripple(ButtonItem,ButtonItem.AbsolutePosition,CurrentTheme)
+						else
+							Utility:ItemError(ButtonItem)
+						end
+					end
+				end))
+
 				if OnDisplayDescription then
-					OnDisplayDescription:Connect(function()
+					GiveTask(OnDisplayDescription:Connect(function()
 						DisplayDescription(Description)
-					end)
+					end))
 				end
 
 				return Button
@@ -804,14 +861,19 @@ function UI:CreateLib(Title,Theme,Position)
 				Name = Name or "Toggle"
 				Callback = Callback or function() end
 				Data = Data or {}
-				
+
 				local State = Data.State or false
-				
+
 				local ToggleItem,OnDisplayDescription = CreateItem(Name,"rbxassetid://8318488758",Description,"Item")
 				local Input = Utility:AddItemButton(ToggleItem)
+				local Keybind = Data.Keybind
 				local Circle = ToggleItem:FindFirstChildOfClass("ImageLabel")
 				local Checked = Instance.new("Frame")
-
+				
+				if Keybind then
+					ToggleItem:FindFirstChildOfClass("TextLabel").Text = string.format("%s [%s]", Name, UIS:GetStringForKeyCode(Keybind))
+				end
+				
 				ToggleItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				ToggleItem.Parent = SectionHolder
 
@@ -824,8 +886,10 @@ function UI:CreateLib(Title,Theme,Position)
 				Checked.Parent = Circle
 
 				local Toggle = {}
+				local CurrentName = Name
 				function Toggle:UpdateName(NewName)
-					ToggleItem:FindFirstChildOfClass("TextLabel").Text = NewName
+					CurrentName = NewName
+					ToggleItem:FindFirstChildOfClass("TextLabel").Text = Keybind ~= nil and string.format("%s [%s]", NewName, UIS:GetStringForKeyCode(Keybind)) or NewName
 				end
 				function Toggle:UpdateIcon(NewIcon)
 					ToggleItem:FindFirstChildOfClass("ImageLabel").Image = NewIcon
@@ -842,21 +906,64 @@ function UI:CreateLib(Title,Theme,Position)
 				function Toggle:GetState()
 					return State
 				end
+				function Toggle:SetKeybind(NewKeybind)
+					Keybind = NewKeybind
+					Toggle:UpdateName(CurrentName)
+				end
+				function Toggle:GetKeybind()
+					return Keybind
+				end
 
-				Input.MouseButton1Click:Connect(function()
+				GiveTask(Input.MouseButton1Click:Connect(function()
 					if Toggle:SetState(not State) then
 						Utility:Ripple(ToggleItem,Vector2.new(Mouse.X,Mouse.Y),CurrentTheme)
 					else
 						Utility:ItemError(ToggleItem)
 					end
-				end)
+				end))
 				
-				if OnDisplayDescription then
-					OnDisplayDescription:Connect(function()
-						DisplayDescription(Description)
-					end)
+				if not Data.BlockKeybindEdit then
+					GiveTask(Input.MouseButton2Click:Connect(function()
+						ToggleItem:FindFirstChildOfClass("TextLabel").Text = string.format("%s [PRESS KEY]", CurrentName)
+
+						while true do
+							local Input = UIS.InputBegan:Wait()
+
+							if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode then
+								if Input.KeyCode == Enum.KeyCode.Escape then
+									Toggle:UpdateName(CurrentName)
+
+									break
+								end
+								
+								Toggle:SetKeybind(Input.KeyCode)
+
+								break
+							end
+						end
+					end))
 				end
 				
+				GiveTask(UIS.InputBegan:Connect(function(Input)
+					if not Keybind then
+						return
+					end
+
+					if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Keybind then
+						if Toggle:SetState(not State) then
+							Utility:Ripple(ToggleItem,ToggleItem.AbsolutePosition,CurrentTheme)
+						else
+							Utility:ItemError(ToggleItem)
+						end
+					end
+				end))
+
+				if OnDisplayDescription then
+					GiveTask(OnDisplayDescription:Connect(function()
+						DisplayDescription(Description)
+					end))
+				end
+
 				Toggle:SetState(State)
 				return Toggle
 			end
@@ -866,20 +973,20 @@ function UI:CreateLib(Title,Theme,Position)
 				Max = Max or 100
 				Callback = Callback or function() end
 				Data = Data or {}
-				
+
 				local Value = Data.Value or Min
-				
+
 				local SliderItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://8324589323",Description,"Item")
 				local Input = Utility:AddItemButton(SliderItem)
 				local SliderHolder = Instance.new("Frame")
 				local SliderValue = Instance.new("Frame")
-				
+
 				local ItemSize = SliderItem.AbsoluteSize
-				
+
 				SliderItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				SliderItem.Size = UDim2.new(1,0,0,ItemSize.Y + 12)
 				SliderItem.Parent = SectionHolder
-				
+
 				SliderHolder.AnchorPoint = Vector2.new(0.5,1)
 				SliderHolder.Position = UDim2.new(0.5,0,1,-6)
 				SliderHolder.Size = UDim2.new(1,-12,0,6)
@@ -889,12 +996,12 @@ function UI:CreateLib(Title,Theme,Position)
 					return Color3.new(math.clamp(CurrentTheme.Item.R - 10/255,0,1),math.clamp(CurrentTheme.Item.G - 10/255,0,1),math.clamp(CurrentTheme.Item.B - 10/255,0,1))
 				end)
 				SliderHolder.Parent = SliderItem
-				
+
 				SliderValue.Size = UDim2.new(0,0,1,0)
 				Utility:Corner(SliderValue,UDim.new(1,0))
 				ApplyTheme(SliderValue,"BackgroundColor3","Scheme")
 				SliderValue.Parent = SliderHolder
-				
+
 				local Slider = {}
 				function Slider:UpdateName(NewName)
 					SliderItem:FindFirstChildOfClass("TextLabel").Text = NewName
@@ -905,21 +1012,21 @@ function UI:CreateLib(Title,Theme,Position)
 				function Slider:SetValue(NewValue)
 					Value = math.clamp(NewValue,Min,Max)
 					SliderValue.Size = UDim2.new(math.clamp((Value - Min)/(Max - Min),0,1),0,1,0)
-					
+
 					Utility:CallCallback(Callback,Value)
 				end
 				function Slider:GetValue()
 					return Value
 				end
-				
-				Input.MouseButton1Down:Connect(function()
+
+				GiveTask(Input.MouseButton1Down:Connect(function()
 					local MouseMove
 					local MouseUp
-					
+
 					local function Update()
 						Slider:SetValue((((Max - Min)/SliderHolder.AbsoluteSize.X) * (Mouse.X - SliderHolder.AbsolutePosition.X)) + Min)
 					end
-					
+
 					MouseMove = Mouse.Move:Connect(Update)
 					MouseUp = UIS.InputEnded:Connect(function(Input)
 						if Input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -929,16 +1036,16 @@ function UI:CreateLib(Title,Theme,Position)
 							Update()
 						end
 					end)
-					
+
 					Update()
-				end)
-				
+				end))
+
 				if OnDisplayDescription then
-					OnDisplayDescription:Connect(function()
+					GiveTask(OnDisplayDescription:Connect(function()
 						DisplayDescription(Description)
-					end)
+					end))
 				end
-				
+
 				Slider:SetValue(Value)
 				return Slider
 			end
@@ -967,7 +1074,7 @@ function UI:CreateLib(Title,Theme,Position)
 					return Color3.new(math.clamp(CurrentTheme.Item.R - 10/255,0,1),math.clamp(CurrentTheme.Item.G - 10/255,0,1),math.clamp(CurrentTheme.Item.B - 10/255,0,1))
 				end)
 				TextBoxHolder.Parent = TextBoxItem
-				
+
 				TextBoxInstance.AnchorPoint = Vector2.new(0.5,0.5)
 				TextBoxInstance.BackgroundTransparency = 1
 				TextBoxInstance.BorderSizePixel = 0
@@ -993,39 +1100,39 @@ function UI:CreateLib(Title,Theme,Position)
 				end
 				function TextBox:SetValue(NewValue)
 					TextBoxInstance.Text = NewValue
-					
+
 					Utility:CallCallback(Callback,NewValue)
 				end
 				function TextBox:GetValue()
 					return TextBoxInstance.Text
 				end
-				
+
 				local CallbackMode = Data.CallbackMode
 				if CallbackMode == "OnEnterPressed" then
-					TextBoxInstance.FocusLost:Connect(function(EnterPressed)
+					GiveTask(TextBoxInstance.FocusLost:Connect(function(EnterPressed)
 						if not EnterPressed then
 							return
 						end
-						
+
 						Utility:CallCallback(Callback,TextBoxInstance.Text)
-					end)
-					TextBoxInstance.ReturnPressedFromOnScreenKeyboard:Connect(function()
+					end))
+					GiveTask(TextBoxInstance.ReturnPressedFromOnScreenKeyboard:Connect(function()
 						Utility:CallCallback(Callback,TextBoxInstance.Text)
-					end)
+					end))
 				elseif CallbackMode == "OnFocusLost" then
-					TextBoxInstance.FocusLost:Connect(function()
+					GiveTask(TextBoxInstance.FocusLost:Connect(function()
 						Utility:CallCallback(Callback,TextBoxInstance.Text)
-					end)
+					end))
 				else
-					TextBoxInstance:GetPropertyChangedSignal("Text"):Connect(function()
+					GiveTask(TextBoxInstance:GetPropertyChangedSignal("Text"):Connect(function()
 						Utility:CallCallback(Callback,TextBoxInstance.Text)
-					end)
+					end))
 				end
 
 				if OnDisplayDescription then
-					OnDisplayDescription:Connect(function()
+					GiveTask(OnDisplayDescription:Connect(function()
 						DisplayDescription(Description)
-					end)
+					end))
 				end
 
 				TextBox:SetValue(Data.Value or "")
@@ -1036,9 +1143,9 @@ function UI:CreateLib(Title,Theme,Position)
 				Color = Color or Color3.new(1,1,1)
 				Callback = Callback or function() end
 				Data = Data or {}
-				
+
 				local h,s,v = 0,1,1
-				
+
 				local ColorPickerItem,OnDisplayDescription = CreateItem(Name,Data.Icon or "rbxassetid://9177457893",Description,"Item")
 				local Input = Utility:AddItemButton(ColorPickerItem)
 				local Preview = Instance.new("TextLabel")
@@ -1047,18 +1154,18 @@ function UI:CreateLib(Title,Theme,Position)
 				local Value = Instance.new("TextButton")
 				local ValueGradient = Instance.new("UIGradient")
 				local ValueSlider = Instance.new("Frame")
-				
+
 				local ItemSize = ColorPickerItem.AbsoluteSize
-				
+
 				ColorPickerItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				ColorPickerItem.Parent = SectionHolder
-				
+
 				Preview.AnchorPoint = Vector2.new(1,0.5)
 				Preview.Position = UDim2.new(1,-36,0,ItemSize.Y/2)
 				Preview.TextSize = 8
 				Utility:Corner(Preview,UDim.new(1,0))
 				Preview.Parent = ColorPickerItem
-				
+
 				ColorWheel.AutoButtonColor = false
 				ColorWheel.BackgroundTransparency = 1
 				ColorWheel.BorderSizePixel = 0
@@ -1066,14 +1173,14 @@ function UI:CreateLib(Title,Theme,Position)
 				ColorWheel.Size = UDim2.new(0,128,0,128)
 				ColorWheel.Image = "rbxassetid://6020299385"
 				ColorWheel.Parent = ColorPickerItem
-				
+
 				ColorPickerImage.AnchorPoint = Vector2.new(0.5,0.5)
 				ColorPickerImage.BackgroundTransparency = 1
 				ColorPickerImage.BorderSizePixel = 0
 				ColorPickerImage.Size = UDim2.new(0.09,0,0.09,0)
 				ColorPickerImage.Image = "rbxassetid://3678860011"
 				ColorPickerImage.Parent = ColorWheel
-				
+
 				Value.AutoButtonColor = false
 				Value.BackgroundColor3 = Color3.new(1,1,1)
 				Value.Position = UDim2.new(0,152,0,ItemSize.Y + 12)
@@ -1081,23 +1188,23 @@ function UI:CreateLib(Title,Theme,Position)
 				Value.Text = ""
 				Utility:Corner(Value,CornerSize)
 				Value.Parent = ColorPickerItem
-				
+
 				ValueGradient.Rotation = 90
 				ValueGradient.Parent = Value
-				
+
 				ValueSlider.AnchorPoint = Vector2.new(0.5,0.5)
 				ValueSlider.Size = UDim2.new(1,6,0,6)
 				Utility:Corner(ValueSlider,UDim.new(1,0))
 				ApplyTheme(ValueSlider,"BackgroundColor3","Text")
 				ValueSlider.Parent = Value
-				
+
 				local ColorPicker = {}
 				ColorPicker.Focused = false
 				local function UpdatePreview()
 					local Color = ColorPicker:GetColor()
 					local Text = tostring(math.round(Color.R * 255))..", "..tostring(math.round(Color.G * 255))..", "..tostring(math.round(Color.B * 255))
 					local TextSize = TextService:GetTextSize(Text,16,Enum.Font.SourceSans,Vector2.new(math.huge,math.huge))
-					
+
 					Preview.BackgroundColor3 = Color
 					Preview.Size = UDim2.new(0,TextSize.X + 12,0,ItemSize.Y - 15)
 					Preview.Text = Text
@@ -1107,12 +1214,12 @@ function UI:CreateLib(Title,Theme,Position)
 					h = math.clamp((math.pi - math.atan2(ColorPickerImage.Position.Y.Offset - 64,ColorPickerImage.Position.X.Offset - 64)) / (math.pi * 2),0,1)
 					s = math.clamp(math.abs((ColorPickerImage.AbsolutePosition - (ColorWheel.AbsolutePosition + Vector2.new(64,64))).Magnitude) / 64,0,1)
 					v = math.clamp(1 - (ValueSlider.Position.Y.Offset / 128),0,1)
-					
+
 					UpdatePreview()
 					if not ColorPicker.Focused then
 						return
 					end
-					
+
 					ValueGradient.Color = ColorSequence.new({
 						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
 						ColorSequenceKeypoint.new(1,Color3.new(0,0,0))
@@ -1120,15 +1227,15 @@ function UI:CreateLib(Title,Theme,Position)
 				end
 				local function UpdatePickers()
 					UpdatePreview()
-					
+
 					if not ColorPicker.Focused then
 						return
 					end
-					
+
 					local x = -math.cos(h * math.pi * 2) * s * 64
 					local y = math.sin(h * math.pi * 2) * s * 64
 					ColorPickerImage.Position = UDim2.new(0,x + 64,0,y + 64)
-					
+
 					ValueSlider.Position = UDim2.new(0.5,0,0,(1 - v) * 128)
 					ValueGradient.Color = ColorSequence.new({
 						ColorSequenceKeypoint.new(0,Color3.fromHSV(h,s,1)),
@@ -1146,7 +1253,7 @@ function UI:CreateLib(Title,Theme,Position)
 						return
 					end
 					ColorPicker.Focused = Focused
-					
+
 					UpdatePickers()
 					Utility:Tween(ColorPickerItem,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{
 						Size = UDim2.new(1,0,0,ItemSize.Y + (Focused and 152 or 0))
@@ -1157,34 +1264,34 @@ function UI:CreateLib(Title,Theme,Position)
 				end
 				function ColorPicker:SetColor(Color)
 					h,s,v = Color:ToHSV()
-					
+
 					UpdatePickers()
 					Utility:CallCallback(Callback,ColorPicker:GetColor())
 				end
 				function ColorPicker:GetColor()
 					return Color3.fromHSV(h,s,v)
 				end
-				
-				Input.MouseButton1Down:Connect(function()
+
+				GiveTask(Input.MouseButton1Down:Connect(function()
 					ColorPicker:ToggleFocused()
 					Utility:Ripple(ColorPickerItem,Vector2.new(Mouse.X,Mouse.Y),CurrentTheme)
-				end)
-				ColorWheel.MouseButton1Down:Connect(function()
+				end))
+				GiveTask(ColorWheel.MouseButton1Down:Connect(function()
 					local MouseMove
 					local MouseUp
-					
+
 					local function Update()
 						local ValueX = Mouse.X - ColorWheel.AbsolutePosition.X
 						local ValueY = Mouse.Y - ColorWheel.AbsolutePosition.Y
 						if (Vector2.new(ValueX,ValueY) - Vector2.new(64,64)).Magnitude > 64 then
 							return
 						end
-						
+
 						ColorPickerImage.Position = UDim2.new(0,ValueX,0,ValueY)
 						UpdateColors()
 						Utility:CallCallback(Callback,ColorPicker:GetColor())
 					end
-					
+
 					MouseMove = Mouse.Move:Connect(Update)
 					MouseUp = UIS.InputEnded:Connect(function(Input)
 						if Input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -1196,22 +1303,22 @@ function UI:CreateLib(Title,Theme,Position)
 					end)
 
 					Update()
-				end)
-				Value.MouseButton1Down:Connect(function()
+				end))
+				GiveTask(Value.MouseButton1Down:Connect(function()
 					local MouseMove
 					local MouseUp
-					
+
 					local function Update()
 						local Value = Mouse.Y - Value.AbsolutePosition.Y
 						if Value < 0 or Value > 128 then
 							return
 						end
-						
+
 						ValueSlider.Position = UDim2.new(0.5,0,0,Value)
 						UpdateColors()
 						Utility:CallCallback(Callback,ColorPicker:GetColor())
 					end
-					
+
 					MouseMove = Mouse.Move:Connect(Update)
 					MouseUp = UIS.InputEnded:Connect(function(Input)
 						if Input.UserInputType == Enum.UserInputType.MouseButton1 then
@@ -1223,36 +1330,36 @@ function UI:CreateLib(Title,Theme,Position)
 					end)
 
 					Update()
-				end)
+				end))
 
 				if OnDisplayDescription then
-					OnDisplayDescription:Connect(function()
+					GiveTask(OnDisplayDescription:Connect(function()
 						DisplayDescription(Description)
-					end)
+					end))
 				end
-				
+
 				ColorPicker:SetColor(Color)
 				return ColorPicker
 			end
 			function Section:NewDropdown(Name,Description,List,Callback,Data)
 				Name = Name or "Dropdown"
 				Data = Data or {}
-				
+
 				local Selectable = Data.Selectable or false
 				local Selected = Selectable and Data.Selected
 				local ButtonEvents = {}
-				
+
 				local DropdownItem,OnDisplayDescription = CreateItem(Name..(Selectable and " / "..tostring(Selected) or ""),Data.Icon or "rbxassetid://9185263957",Description,"Item")
 				local Input = Utility:AddItemButton(DropdownItem)
 				local Arrow = Instance.new("ImageLabel")
 				local Holder = Instance.new("Frame")
 				local UIList = Instance.new("UIListLayout")
-				
+
 				local ItemSize = DropdownItem.AbsoluteSize
-				
+
 				DropdownItem.LayoutOrder = #SectionHolder:GetChildren() - 1
 				DropdownItem.Parent = SectionHolder
-				
+
 				Arrow.AnchorPoint = Vector2.new(1,0.5)
 				Arrow.BackgroundTransparency = 1
 				Arrow.BorderSizePixel = 0
@@ -1261,18 +1368,18 @@ function UI:CreateLib(Title,Theme,Position)
 				Arrow.Image = "rbxassetid://9177111416"
 				Instance.new("UIAspectRatioConstraint",Arrow)
 				Arrow.Parent = DropdownItem
-				
+
 				Holder.AnchorPoint = Vector2.new(0.5,0)
 				Holder.BackgroundTransparency = 1
 				Holder.Position = UDim2.new(0.5,0,0,ItemSize.Y + 12)
 				Holder.ClipsDescendants = true
 				Holder.Parent = DropdownItem
-				
+
 				UIList.Padding = UDim.new(0,8)
 				UIList.FillDirection = Enum.FillDirection.Vertical
 				UIList.SortOrder = Data.SortOrder or Enum.SortOrder.LayoutOrder
 				UIList.Parent = Holder
-				
+
 				local Dropdown = {}
 				Dropdown.Focused = false
 				function Dropdown:UpdateName(NewName)
@@ -1287,7 +1394,7 @@ function UI:CreateLib(Title,Theme,Position)
 						return
 					end
 					Dropdown.Focused = Focused
-					
+
 					Arrow.Rotation = Focused and 180 or 0
 					Utility:Tween(DropdownItem,TweenInfo.new(0.2,Enum.EasingStyle.Sine,Enum.EasingDirection.Out),{
 						Size = UDim2.new(1,0,0,ItemSize.Y + (Focused and (Holder.AbsoluteSize.Y + 24) or 0))
@@ -1296,18 +1403,23 @@ function UI:CreateLib(Title,Theme,Position)
 				function Dropdown:ToggleFocused()
 					return Dropdown:SetFocused(not Dropdown.Focused)
 				end
+				GiveTask(function()
+					for _, Event in ipairs(ButtonEvents) do
+						Event:Disconnect()
+					end
+				end)
 				function Dropdown:Refresh(List)
 					for _,Event in ipairs(ButtonEvents) do
 						Event:Disconnect()
 					end
 					table.clear(ButtonEvents)
-					
+
 					for _,Item in ipairs(Holder:GetChildren()) do
 						if not Item:IsA("UIListLayout") then
 							Item:Destroy()
 						end
 					end
-					
+
 					for Index,ItemName in ipairs(List) do
 						local Button = Instance.new("TextButton")
 						Button.Name = ItemName
@@ -1325,20 +1437,20 @@ function UI:CreateLib(Title,Theme,Position)
 						ApplyTheme(Button,"BackgroundColor3","Scheme")
 						ApplyTheme(Button,"TextColor3","Text")
 						Button.Parent = Holder
-						
+
 						table.insert(ButtonEvents,Button.MouseButton1Down:Connect(function()
 							Utility:Ripple(Button,Vector2.new(Mouse.X,Mouse.Y),Utility:EditThemeStyle(CurrentTheme,"Scheme",Utility:IsColorDark(CurrentTheme.Scheme) and Color3.new(1,1,1) or Color3.new(0,0,0)))
-							
+
 							if Selectable then
 								Selected = ItemName
 								Dropdown:SetFocused(false)
 								DropdownItem:FindFirstChildOfClass("TextLabel").Text = Name.." / "..tostring(ItemName)
 							end
-							
+
 							Utility:CallCallback(Callback,ItemName)
 						end))
 					end
-					
+
 					Holder.Size = UDim2.new(1,-24,0,UIList.AbsoluteContentSize.Y)
 				end
 				if Selectable then
@@ -1346,26 +1458,26 @@ function UI:CreateLib(Title,Theme,Position)
 						return Selected
 					end
 				end
-				
-				Input.MouseButton1Down:Connect(function()
+
+				GiveTask(Input.MouseButton1Down:Connect(function()
 					Dropdown:ToggleFocused()
 					Utility:Ripple(DropdownItem,Vector2.new(Mouse.X,Mouse.Y),CurrentTheme)
-				end)
+				end))
 
 				if OnDisplayDescription then
-					OnDisplayDescription:Connect(function()
+					GiveTask(OnDisplayDescription:Connect(function()
 						DisplayDescription(Description)
-					end)
+					end))
 				end
-				
+
 				Dropdown:Refresh(List)
 				return Dropdown
 			end
-			
+
 			if OnDisplayDescription then
-				OnDisplayDescription:Connect(function()
+				GiveTask(OnDisplayDescription:Connect(function()
 					DisplayDescription(Description)
-				end)
+				end))
 			end
 
 			Utility:SyncSize(SectionHolder,SectionUIList)
@@ -1406,6 +1518,16 @@ function UI:CreateLib(Title,Theme,Position)
 	CloseButton.MouseButton1Click:Connect(function()
 		OnClose:Fire()
 		Gui:Destroy()
+		
+		for _, Task in ipairs(Cleanup) do
+			if typeof(Task) == "RBXScriptConnection" then
+				Task:Disconect()
+			elseif typeof(Task) == "function" then
+				Task()
+			elseif typeof(Task) == "Instance" then
+				Task:Destroy()
+			end
+		end
 	end)
 
 	Utility:SyncCanvasSize(Tabs,TabsUIList)
