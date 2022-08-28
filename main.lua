@@ -1525,7 +1525,7 @@ function UI:CreateLib(Title,Theme,Position)
 		
 		for _, Task in ipairs(Cleanup) do
 			if typeof(Task) == "RBXScriptConnection" then
-				Task:Disconect()
+				Task:Disconnect()
 			elseif typeof(Task) == "function" then
 				Task()
 			elseif typeof(Task) == "Instance" then
