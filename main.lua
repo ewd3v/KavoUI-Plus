@@ -820,9 +820,11 @@ function UI:CreateLib(Title,Theme,Position)
 						while true do
 							local Input = UIS.InputBegan:Wait()
 							
+							task.wait()
+							
 							if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode then
-								if Input.KeyCode == Enum.KeyCode.Escape then
-									Button:UpdateName(CurrentName)
+								if Input.KeyCode == Enum.KeyCode.Delete or Input.KeyCode == Enum.KeyCode.Backspace then
+									Button:SetKeybind(nil)
 									
 									break
 								end
@@ -842,7 +844,7 @@ function UI:CreateLib(Title,Theme,Position)
 					
 					if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Keybind then
 						if Utility:CallCallback(Callback) then
-							Utility:Ripple(ButtonItem,ButtonItem.AbsolutePosition,CurrentTheme)
+							Utility:Ripple(ButtonItem,ButtonItem.AbsolutePosition + ButtonItem.AbsoluteSize * 0.5,CurrentTheme)
 						else
 							Utility:ItemError(ButtonItem)
 						end
@@ -928,10 +930,12 @@ function UI:CreateLib(Title,Theme,Position)
 
 						while true do
 							local Input = UIS.InputBegan:Wait()
-
+							
+							task.wait()
+							
 							if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode then
-								if Input.KeyCode == Enum.KeyCode.Escape then
-									Toggle:UpdateName(CurrentName)
+								if Input.KeyCode == Enum.KeyCode.Delete or Input.KeyCode == Enum.KeyCode.Backspace then
+									Toggle:SetKeybind(nil)
 
 									break
 								end
@@ -951,7 +955,7 @@ function UI:CreateLib(Title,Theme,Position)
 
 					if Input.UserInputType == Enum.UserInputType.Keyboard and Input.KeyCode == Keybind then
 						if Toggle:SetState(not State) then
-							Utility:Ripple(ToggleItem,ToggleItem.AbsolutePosition,CurrentTheme)
+							Utility:Ripple(ToggleItem,ToggleItem.AbsolutePosition + ToggleItem.AbsoluteSize * 0.5,CurrentTheme)
 						else
 							Utility:ItemError(ToggleItem)
 						end
